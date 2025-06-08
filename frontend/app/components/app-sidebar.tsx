@@ -24,6 +24,8 @@ import {
   SidebarMenuItem,
 } from "~/components/ui/sidebar";
 import { Button } from "./ui/button";
+import { href, useNavigate } from "react-router";
+import { nanoid } from "nanoid";
 
 const data = {
   user: {
@@ -150,6 +152,7 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const navigate = useNavigate();
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -171,7 +174,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenuButton asChild>
-          <Button>New Chat</Button>
+          <Button
+            onClick={() =>
+              navigate(href("/chat/:thread_id", { thread_id: nanoid() }))
+            }
+          >
+            New Chat
+          </Button>
         </SidebarMenuButton>
         <NavMain items={data.navMain} />
       </SidebarContent>

@@ -65,10 +65,11 @@ impl MessageService {
             id: args.id,
             chat_id: args.chat_id,
             user_id: user_id.to_string(),
+            role: args.role,
             body: args.body,
             version: 1,
-            created_at: args.created_at,
-            updated_at: args.updated_at,
+            created_at: args.created_at.naive_utc(),
+            updated_at: args.updated_at.naive_utc(),
         };
 
         self.message_repo.create(conn, &message)
@@ -86,7 +87,7 @@ impl MessageService {
             let changeset = Changeset {
                 body: args.body,
                 version: existing.version + 1,
-                updated_at: args.updated_at,
+                updated_at: args.updated_at.naive_utc(),
             };
 
             self.message_repo.update(conn, &args.id, changeset)

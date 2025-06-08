@@ -1,13 +1,16 @@
 import type { ReadTransaction, WriteTransaction } from "replicache";
 
+type MessageRole = "user" | "assistant";
+
 export type Message = {
   readonly id: string;
   readonly chat_id: string;
   readonly user_id: string;
+  readonly role: MessageRole;
   readonly body: string;
   readonly version: number;
-  readonly created_at: number;
-  readonly updated_at: number;
+  readonly created_at: string;
+  readonly updated_at: string;
 };
 
 export const MessageMutators = {
@@ -21,7 +24,7 @@ export const MessageMutators = {
       id,
       updated_at,
       ...updates
-    }: Partial<Message> & { id: string; updated_at: number }
+    }: Partial<Message> & { id: string; updated_at: string }
   ) => {
     const prev = await tx.get<Message>(`message/${id}`);
     const next = { ...prev, ...updates, updated_at } as Message;
@@ -46,5 +49,8 @@ export async function listMessagesForChat(
     .values()
     .toArray();
 
-  return data.sort((a, b) => a.created_at - b.created_at);
+  return data.sort(
+    (a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
 }

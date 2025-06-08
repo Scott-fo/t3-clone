@@ -10,8 +10,8 @@ diesel::table! {
         title -> Nullable<Varchar>,
         archived -> Bool,
         version -> Integer,
-        created_at -> Datetime,
-        updated_at -> Datetime,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
@@ -23,10 +23,12 @@ diesel::table! {
         chat_id -> Varchar,
         #[max_length = 255]
         user_id -> Varchar,
+        #[max_length = 255]
+        role -> Varchar,
         body -> Text,
         version -> Integer,
-        created_at -> Datetime,
-        updated_at -> Datetime,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
@@ -36,8 +38,8 @@ diesel::table! {
         id -> Varchar,
         #[max_length = 255]
         user_id -> Varchar,
-        created_at -> Datetime,
-        updated_at -> Datetime,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
         cvr_version -> Integer,
     }
 }
@@ -49,8 +51,8 @@ diesel::table! {
         #[max_length = 255]
         client_group_id -> Varchar,
         last_mutation_id -> Integer,
-        created_at -> Datetime,
-        updated_at -> Datetime,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
@@ -60,9 +62,9 @@ diesel::table! {
         id -> Varchar,
         #[max_length = 255]
         user_id -> Varchar,
-        expired_at -> Nullable<Datetime>,
-        created_at -> Datetime,
-        updated_at -> Datetime,
+        expired_at -> Nullable<Timestamp>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
@@ -75,8 +77,8 @@ diesel::table! {
         #[max_length = 255]
         password_digest -> Varchar,
         version -> Integer,
-        created_at -> Datetime,
-        updated_at -> Datetime,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 

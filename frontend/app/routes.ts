@@ -1,12 +1,17 @@
 import {
   type RouteConfig,
-  index,
   route,
   layout,
+  index,
 } from "@react-router/dev/routes";
 
 export default [
-  layout("layouts/protected.tsx", [index("routes/dashboard.tsx")]),
+  layout("layouts/protected.tsx", [
+    layout("layouts/app.tsx", [
+      index("routes/home.tsx"),
+      route("chat/:thread_id", "routes/chat.tsx"),
+    ]),
+  ]),
 
   layout("layouts/public.tsx", [
     route("login", "routes/login.tsx"),

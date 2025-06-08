@@ -52,8 +52,8 @@ impl ChatService {
             title: None,
             archived: false,
             version: 1,
-            created_at: args.created_at,
-            updated_at: args.updated_at,
+            created_at: args.created_at.naive_utc(),
+            updated_at: args.updated_at.naive_utc(),
         };
 
         self.repository.create(conn, &chat)
@@ -79,7 +79,7 @@ impl ChatService {
                 title: args.title,
                 archived: args.archived,
                 version: existing.version + 1,
-                updated_at: args.updated_at,
+                updated_at: args.updated_at.naive_utc(),
             };
 
             self.repository.update(conn, &args.id, changeset)

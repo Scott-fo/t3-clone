@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -23,6 +23,7 @@ pub struct Message {
     pub id: String,
     pub chat_id: String,
     pub user_id: String,
+    pub role: String,
     pub body: String,
     pub version: i32,
     pub created_at: NaiveDateTime,
@@ -41,16 +42,17 @@ pub struct Changeset {
 pub struct CreateArgs {
     pub id: String,
     pub chat_id: String,
+    pub role: String,
     pub body: String,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateArgs {
     pub id: String,
     pub body: Option<String>,
-    pub updated_at: NaiveDateTime,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl ReplicachePullModel for Message {

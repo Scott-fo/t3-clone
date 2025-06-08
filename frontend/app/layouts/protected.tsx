@@ -16,7 +16,7 @@ const ProtectedRoute = () => {
   return (
     <ReplicacheProvider userId={user.id}>
       <DataSync />
-      <Outlet />;
+      <Outlet />
     </ReplicacheProvider>
   );
 };

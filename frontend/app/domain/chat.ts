@@ -3,11 +3,11 @@ import type { ReadTransaction, WriteTransaction } from "replicache";
 export type Chat = {
   readonly id: string;
   readonly user_id: string;
-  readonly tite: string | null;
-  readonly archived: boolean;
+  readonly title?: string | null;
+  readonly archived?: boolean;
   readonly version: number;
-  readonly created_at: number;
-  readonly updated_at: number;
+  readonly created_at: string;
+  readonly updated_at: string;
 };
 
 export const ChatMutators = {
@@ -21,7 +21,7 @@ export const ChatMutators = {
       id,
       updated_at,
       ...updates
-    }: Partial<Chat> & { id: string; updated_at: number }
+    }: Partial<Chat> & { id: string; updated_at: string }
   ) => {
     const prev = await tx.get<Chat>(`chat/${id}`);
     const next = { ...prev, ...updates, updated_at } as Chat;
@@ -35,5 +35,8 @@ export const ChatMutators = {
 
 export async function listChats(tx: ReadTransaction) {
   const data = await tx.scan<Chat>({ prefix: "chat/" }).values().toArray();
-  return data.sort((a, b) => a.updated_at! - b.updated_at!);
+  return data.sort(
+    (a, b) =>
+      new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
+  );
 }
