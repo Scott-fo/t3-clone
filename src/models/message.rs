@@ -30,7 +30,23 @@ pub struct Message {
 #[derive(AsChangeset)]
 #[diesel(table_name = crate::schema::messages)]
 pub struct Changeset {
-    body: Option<String>,
-    version: i32,
-    updated_at: NaiveDateTime,
+    pub body: Option<String>,
+    pub version: i32,
+    pub updated_at: NaiveDateTime,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateArgs {
+    pub id: String,
+    pub chat_id: String,
+    pub body: String,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateArgs {
+    pub id: String,
+    pub body: Option<String>,
+    pub updated_at: NaiveDateTime,
 }

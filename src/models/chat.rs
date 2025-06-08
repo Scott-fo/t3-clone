@@ -19,10 +19,25 @@ pub struct Chat {
 #[derive(AsChangeset)]
 #[diesel(table_name = crate::schema::chats)]
 pub struct Changeset {
-    title: Option<Option<String>>,
-    archived: Option<bool>,
-    version: i32,
-    updated_at: NaiveDateTime,
+    pub title: Option<String>,
+    pub archived: Option<bool>,
+    pub version: i32,
+    pub updated_at: NaiveDateTime,
+}
+
+pub struct CreateArgs {
+    pub id: String,
+    pub user_id: String,
+    pub version: i32,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
+pub struct UpdateArgs {
+    pub id: String,
+    pub title: Option<String>,
+    pub archived: Option<bool>,
+    pub updated_at: NaiveDateTime,
 }
 
 #[derive(Debug, Serialize)]
