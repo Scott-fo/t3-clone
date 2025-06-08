@@ -1,4 +1,7 @@
-use t3_clone::telemetry::{get_subscriber, init_subscriber};
+use t3_clone::{
+    configuration::get_configuration,
+    telemetry::{get_subscriber, init_subscriber},
+};
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
@@ -8,6 +11,8 @@ async fn main() -> Result<(), std::io::Error> {
         std::io::stdout,
     );
     init_subscriber(subscriber);
+
+    let config = get_configuration().expect("Failed to read config");
 
     Ok(())
 }
