@@ -8,6 +8,7 @@ mod handlers;
 mod infra;
 mod middleware;
 mod models;
+mod mutations;
 mod repositories;
 mod routes;
 mod schema;

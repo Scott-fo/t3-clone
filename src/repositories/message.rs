@@ -19,6 +19,15 @@ impl Repository<Message, Changeset> for MessageRepository {
         }
     }
 
+    fn find_by_ids(&self, conn: &mut MysqlConnection, ids: &[&str]) -> Result<Vec<Message>> {
+        use crate::schema::messages::dsl::{id, messages};
+
+        messages
+            .filter(id.eq_any(ids))
+            .load(conn)
+            .context("Failed to find messages by IDs")
+    }
+
     fn find_by_id_for_update(
         &self,
         conn: &mut MysqlConnection,

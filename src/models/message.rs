@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::models::chat::Chat;
 
+use super::replicache::ReplicachePullModel;
+
 #[derive(
     Debug,
     PartialEq,
@@ -35,7 +37,7 @@ pub struct Changeset {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct CreateArgs {
     pub id: String,
     pub chat_id: String,
@@ -44,9 +46,23 @@ pub struct CreateArgs {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct UpdateArgs {
     pub id: String,
     pub body: Option<String>,
     pub updated_at: NaiveDateTime,
+}
+
+impl ReplicachePullModel for Message {
+    fn resource_prefix() -> &'static str {
+        "message"
+    }
+
+    fn get_id(&self) -> &str {
+        &self.id
+    }
+
+    fn get_version(&self) -> i32 {
+        self.version
+    }
 }

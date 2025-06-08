@@ -19,6 +19,15 @@ impl Repository<Session, Changeset> for SessionRepository {
         }
     }
 
+    fn find_by_ids(&self, conn: &mut MysqlConnection, ids: &[&str]) -> Result<Vec<Session>> {
+        use crate::schema::sessions::dsl::{id, sessions};
+
+        sessions
+            .filter(id.eq_any(ids))
+            .load(conn)
+            .context("Failed to find sessions by IDs")
+    }
+
     fn find_by_id_for_update(
         &self,
         conn: &mut MysqlConnection,

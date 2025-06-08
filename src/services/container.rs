@@ -5,14 +5,14 @@ use super::{chat::ChatService, message::MessageService};
 #[derive(Debug, Clone)]
 pub struct ServiceContainer {
     pub chat_service: ChatService,
-    pub message_sercice: MessageService,
+    pub message_service: MessageService,
 }
 
 impl ServiceContainer {
     pub fn new() -> Self {
         Self {
             chat_service: ChatService::new(ChatRepository, MessageRepository),
-            message_sercice: MessageService::new(MessageRepository, ChatRepository),
+            message_service: MessageService::new(MessageRepository, ChatRepository),
         }
     }
 }

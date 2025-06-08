@@ -14,6 +14,7 @@ use tower_sessions::{
 use tower_sessions_redis_store::RedisStore;
 
 use crate::handlers::auth::get_current_user;
+use crate::handlers::replicache::{replicache_pull, replicache_push};
 use crate::{
     app::AppState,
     handlers::auth::{login, logout, register},
@@ -74,6 +75,8 @@ pub fn protected_routes(state: AppState) -> Router<AppState> {
     Router::new()
         .route("/me", get(get_current_user))
         .route("/logout", post(logout))
+        .route("/replicache/pull", post(replicache_pull))
+        .route("/replicache/push", post(replicache_push))
         .route_layer(middleware::from_fn_with_state(
             state,
             crate::middleware::auth::auth,

@@ -31,6 +31,30 @@ diesel::table! {
 }
 
 diesel::table! {
+    replicache_client_groups (id) {
+        #[max_length = 255]
+        id -> Varchar,
+        #[max_length = 255]
+        user_id -> Varchar,
+        created_at -> Datetime,
+        updated_at -> Datetime,
+        cvr_version -> Integer,
+    }
+}
+
+diesel::table! {
+    replicache_clients (id) {
+        #[max_length = 255]
+        id -> Varchar,
+        #[max_length = 255]
+        client_group_id -> Varchar,
+        last_mutation_id -> Integer,
+        created_at -> Datetime,
+        updated_at -> Datetime,
+    }
+}
+
+diesel::table! {
     sessions (id) {
         #[max_length = 255]
         id -> Varchar,
@@ -59,6 +83,8 @@ diesel::table! {
 diesel::allow_tables_to_appear_in_same_query!(
     chats,
     messages,
+    replicache_client_groups,
+    replicache_clients,
     sessions,
     users,
 );

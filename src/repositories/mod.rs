@@ -1,5 +1,7 @@
 pub mod chat;
 pub mod message;
+pub mod replicache_client;
+pub mod replicache_client_group;
 pub mod session;
 
 use anyhow::Result;
@@ -11,6 +13,8 @@ where
     C: AsChangeset,
 {
     fn find_by_id(&self, conn: &mut MysqlConnection, id: &str) -> Result<Option<T>>;
+
+    fn find_by_ids(&self, conn: &mut MysqlConnection, ids: &[&str]) -> Result<Vec<T>>;
 
     fn find_by_id_for_update(&self, conn: &mut MysqlConnection, id: &str) -> Result<Option<T>>;
 
