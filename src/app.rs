@@ -5,6 +5,7 @@ use std::sync::Arc;
 use crate::configuration::Settings;
 use crate::infra;
 use crate::routes::app_routes;
+use crate::services::container::ServiceContainer;
 use tower_sessions_redis_store::fred::prelude::Pool;
 
 #[derive(Debug)]
@@ -53,6 +54,7 @@ pub struct AppState {
     pub cache: Pool,
     pub base_url: Arc<ApplicationBaseUrl>,
     pub config: Arc<Settings>,
+    pub service_container: Arc<ServiceContainer>,
 }
 
 async fn create(
@@ -63,12 +65,14 @@ async fn create(
 ) -> Result<(tokio::net::TcpListener, Router), anyhow::Error> {
     let config = Arc::new(config);
     let base_url = Arc::new(ApplicationBaseUrl(config.application.base_url.clone()));
+    let service_container = Arc::new(ServiceContainer::new());
 
     let app_state = AppState {
         db_pool,
         cache,
         base_url,
         config,
+        service_container,
     };
 
     let app = app_routes(app_state);
