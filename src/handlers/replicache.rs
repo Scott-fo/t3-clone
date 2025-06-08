@@ -60,31 +60,17 @@ pub async fn replicache_push(
     Json(push_req): Json<PushRequest>,
 ) -> Result<Json<PushResponse>, (StatusCode, String)> {
     let result = async {
-        let user_id = user.id;
+        let user_id = user.id.clone();
+        let s = state.clone();
 
         tokio::task::spawn_blocking(move || {
-            process_mutations(
-                state,
-                &push_req.client_group_id,
-                &user_id,
-                &push_req.mutations,
-            )
+            process_mutations(s, &push_req.client_group_id, &user_id, &push_req.mutations)
         })
         .await
         .context("Task panicked or was cancelled")??;
 
-        /*
-         * Come back to this
-
-        let msg = WsMessage {
-            type_: "replicache/poke".to_string(),
-        };
-        if let Err(e) = state.broadcast_tx.send(msg) {
-            tracing::error!("Failed to broadcast poke message: {}", e);
-        }
-        tracing::info!("Broadcasted Poke");
-
-        */
+        state.sse_manager.replicache_poke(&user.id).await;
+        tracing::info!("Broadcasted poke to user {}", user.id);
 
         Ok(Json(PushResponse { success: true }))
     }

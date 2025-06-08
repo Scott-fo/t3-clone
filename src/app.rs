@@ -6,6 +6,7 @@ use crate::configuration::Settings;
 use crate::infra;
 use crate::routes::app_routes;
 use crate::services::container::ServiceContainer;
+use crate::services::sse_manager::SseManager;
 use tower_sessions_redis_store::fred::prelude::Pool;
 
 #[derive(Debug)]
@@ -55,6 +56,7 @@ pub struct AppState {
     pub base_url: Arc<ApplicationBaseUrl>,
     pub config: Arc<Settings>,
     pub service_container: Arc<ServiceContainer>,
+    pub sse_manager: Arc<SseManager>,
 }
 
 async fn create(
@@ -66,6 +68,7 @@ async fn create(
     let config = Arc::new(config);
     let base_url = Arc::new(ApplicationBaseUrl(config.application.base_url.clone()));
     let service_container = Arc::new(ServiceContainer::new());
+    let sse_manager = Arc::new(SseManager::new());
 
     let app_state = AppState {
         db_pool,
@@ -73,6 +76,7 @@ async fn create(
         base_url,
         config,
         service_container,
+        sse_manager,
     };
 
     let app = app_routes(app_state);

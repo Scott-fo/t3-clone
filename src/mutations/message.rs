@@ -22,24 +22,26 @@ impl MessageMutation {}
 
 impl Mutation for MessageMutation {
     fn process(
-        self,
+        &self,
         state: AppState,
         conn: &mut MysqlConnection,
         user_id: &str,
     ) -> Result<Option<String>> {
         match self {
             MessageMutation::Create(args) => {
-                let msg = state
-                    .service_container
-                    .message_service
-                    .create(conn, args, user_id)?;
+                let msg =
+                    state
+                        .service_container
+                        .message_service
+                        .create(conn, args.clone(), user_id)?;
                 Ok(Some(msg.id))
             }
             MessageMutation::Update(args) => {
-                let msg = state
-                    .service_container
-                    .message_service
-                    .update(conn, args, user_id)?;
+                let msg =
+                    state
+                        .service_container
+                        .message_service
+                        .update(conn, args.clone(), user_id)?;
                 Ok(Some(msg.id))
             }
             MessageMutation::Delete(args) => {

@@ -20,7 +20,7 @@ pub struct RawMutation {
 
 pub trait Mutation {
     fn process(
-        self,
+        &self,
         state: AppState,
         conn: &mut MysqlConnection,
         user_id: &str,
