@@ -4,7 +4,7 @@ import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
 
 export default function Page() {
   return (
-    <SidebarProvider>
+    <SidebarProvider className="max-h-screen">
       <AppSidebar />
       <SidebarInset>
         <Outlet />

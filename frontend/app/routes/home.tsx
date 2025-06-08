@@ -90,7 +90,7 @@ export default function Page({ params }: Route.ComponentProps) {
         <div className="relative">
           <div
             className="absolute -top-2 -left-2 -right-2 bottom-0
-                         bg-background rounded-tl-[1.25rem] rounded-tr-[1.25rem]
+                         bg-accent/60 rounded-tl-[1.25rem] rounded-tr-[1.25rem]
                          ring-1 ring-black/10 pointer-events-none
                          z-0"
             aria-hidden="true"
