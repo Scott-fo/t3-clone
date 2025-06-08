@@ -1,5 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router";
+import { DataSync } from "~/components/data-sync";
 import { useAuth } from "~/contexts/AuthContext";
+import { ReplicacheProvider } from "~/contexts/ReplicacheContext";
 
 const ProtectedRoute = () => {
   const { user, loading } = useAuth();
@@ -11,7 +13,12 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return <Outlet />;
+  return (
+    <ReplicacheProvider userId={user.id}>
+      <DataSync />
+      <Outlet />;
+    </ReplicacheProvider>
+  );
 };
 
 export default ProtectedRoute;
