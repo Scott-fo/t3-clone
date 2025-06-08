@@ -8,6 +8,7 @@ import {
 } from "react";
 import { ChatMutators } from "~/domain/chat";
 import { MessageMutators } from "~/domain/message";
+import { useSSE } from "./SSEContext";
 
 type ReplicacheProviderProps = {
   userId: string;
@@ -36,6 +37,8 @@ export function ReplicacheProvider({
   children,
   userId,
 }: ReplicacheProviderProps) {
+  const sse = useSSE();
+
   const rep = useMemo(() => {
     return new Replicache({
       name: `user-${userId}`,
@@ -54,30 +57,15 @@ export function ReplicacheProvider({
   }, [userId]);
 
   useEffect(() => {
-    const eventSource = new EventSource("/api/sse");
-
-    eventSource.addEventListener("replicache/poke", (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log("Received poke event: ", data);
-        rep.pull();
-      } catch (error) {
-        console.error("Error parsing SSE event data: ", error);
-      }
-    });
-
-    eventSource.onopen = () => {
-      console.log("SSE connection established");
+    const handleReplicachePoke = () => {
+      console.log("SSE poke received");
+      rep.pull();
     };
 
-    eventSource.onerror = (error) => {
-      console.error("SSE connection error: ", error);
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [rep]);
+    sse.addEventListener("replicache-poke", handleReplicachePoke);
+    return () =>
+      sse.removeEventListener("replicache-poke", handleReplicachePoke);
+  }, [rep, sse]);
 
   return (
     <ReplicacheContext.Provider value={rep}>

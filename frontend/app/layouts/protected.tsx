@@ -2,6 +2,7 @@ import { Navigate, Outlet, useLocation } from "react-router";
 import { DataSync } from "~/components/data-sync";
 import { useAuth } from "~/contexts/AuthContext";
 import { ReplicacheProvider } from "~/contexts/ReplicacheContext";
+import { SSEProvider } from "~/contexts/SSEContext";
 
 const ProtectedRoute = () => {
   const { user, loading } = useAuth();
@@ -14,10 +15,12 @@ const ProtectedRoute = () => {
   }
 
   return (
-    <ReplicacheProvider userId={user.id}>
-      <DataSync />
-      <Outlet />
-    </ReplicacheProvider>
+    <SSEProvider userId={user.id}>
+      <ReplicacheProvider userId={user.id}>
+        <DataSync />
+        <Outlet />
+      </ReplicacheProvider>
+    </SSEProvider>
   );
 };
 
