@@ -22,26 +22,24 @@ impl ChatMutation {}
 
 impl Mutation for ChatMutation {
     fn process(
-        &self,
+        self,
         state: AppState,
         conn: &mut MysqlConnection,
         user_id: &str,
     ) -> Result<Option<String>> {
         match self {
             ChatMutation::Create(args) => {
-                let chat =
-                    state
-                        .service_container
-                        .chat_service
-                        .create(conn, args.to_owned(), user_id)?;
+                let chat = state
+                    .service_container
+                    .chat_service
+                    .create(conn, args, user_id)?;
                 Ok(Some(chat.id))
             }
             ChatMutation::Update(args) => {
-                let chat =
-                    state
-                        .service_container
-                        .chat_service
-                        .update(conn, args.to_owned(), user_id)?;
+                let chat = state
+                    .service_container
+                    .chat_service
+                    .update(conn, args, user_id)?;
                 Ok(Some(chat.id))
             }
             ChatMutation::Delete(args) => {
