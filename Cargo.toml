@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-axum = "0.8.4"
+axum = { version = "0.8.4", features = ["macros"]}
 config = "0.15.11"
 secrecy = { version = "0.10.3", features = ["serde"] }
 serde = { version = "1.0.219", features = ["derive"] }
@@ -19,5 +19,11 @@ chrono = { version = "0.4.41", features = ["serde"] }
 argon2 = { version = "0.5.3", features = ["std"] }
 anyhow = "1.0.98"
 uuid = { version = "1.17.0", features = ["v4", "serde"] }
+tower-sessions-redis-store = "0.16.0"
+tower = "0.5.2"
+tower-sessions = { version = "0.14.0", features = ["signed"] }
+tower_governor = "0.7.0"
+tower-http = { version = "0.6.6", features = ["fs", "trace", "cors", "timeout"] }
+
 
 

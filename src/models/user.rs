@@ -1,12 +1,16 @@
-use crate::schema::users;
-use crate::schema::users::dsl::*;
-use crate::{auth, infra::db::DbPool};
+use crate::auth;
+use crate::dtos;
+use crate::infra::db::DbPool;
+use crate::repositories::Repository;
+use crate::repositories::session::SessionRepository;
 use anyhow::{Context, Result, bail};
 use chrono::{NaiveDateTime, Utc};
 use diesel::prelude::*;
 use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use super::session::Session as DbSession;
 
 #[derive(Debug, Deserialize)]
 pub struct NewUser {
@@ -41,6 +45,8 @@ impl User {
     }
 
     pub fn create(new_user: NewUser, conn: &mut MysqlConnection) -> Result<Self> {
+        use crate::schema::users::dsl::*;
+
         if new_user.password.expose_secret().len() < 12 {
             bail!("Password should be at least 12 characters");
         }
@@ -58,7 +64,7 @@ impl User {
 
         let user = User::new(new_user, password_hash);
 
-        diesel::insert_into(users::table)
+        diesel::insert_into(crate::schema::users::table)
             .values(&user)
             .execute(conn)
             .context("Error inserting new user into the database")?;
@@ -66,27 +72,44 @@ impl User {
         Ok(user)
     }
 
-    pub fn authenticate(user_email: &str, password: &SecretString, pool: &DbPool) -> Result<User> {
+    pub fn authenticate_and_create_session(
+        email: &str,
+        password: &SecretString,
+        pool: &DbPool,
+    ) -> Result<(User, DbSession)> {
+        use crate::schema::users;
+
         let mut conn = pool
             .get()
             .context("Failed to get DB connection from pool")?;
 
-        let user = users
-            .filter(email.eq(user_email))
-            .first::<User>(&mut conn)
-            .map_err(|e| match e {
-                diesel::result::Error::NotFound => {
-                    anyhow::anyhow!("Invalid email or password")
-                }
-                _ => anyhow::Error::new(e).context(format!(
-                    "Database error while finding user with email {}",
-                    user_email
-                )),
-            })?;
+        conn.transaction(|conn| {
+            let user = users::dsl::users
+                .filter(users::dsl::email.eq(email))
+                .first::<User>(conn)
+                .map_err(|_| anyhow::anyhow!("Invalid email or password"))?;
 
-        auth::verify_password(password, &user.password_digest)
-            .map_err(|_| anyhow::anyhow!("Invalid email or password"))?;
+            auth::verify_password(password, &user.password_digest)
+                .map_err(|_| anyhow::anyhow!("Invalid email or password"))?;
 
-        Ok(user)
+            let new_session = DbSession::new(&user.id);
+            let db_session = SessionRepository
+                .create(conn, &new_session)
+                .context("Failed to create database session")?;
+
+            Ok((user, db_session))
+        })
+    }
+}
+
+impl From<User> for dtos::user::User {
+    fn from(value: User) -> Self {
+        dtos::user::User {
+            id: value.id,
+            email: value.email,
+            version: value.version,
+            created_at: value.created_at,
+            updated_at: value.updated_at,
+        }
     }
 }
