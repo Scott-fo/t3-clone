@@ -1,5 +1,5 @@
-use axum::Router;
-use axum::routing::post;
+use axum::routing::{get, post};
+use axum::{Router, middleware};
 use secrecy::ExposeSecret;
 use tower::ServiceBuilder;
 use tower_governor::{GovernorLayer, governor::GovernorConfigBuilder};
@@ -13,6 +13,7 @@ use tower_sessions::{
 };
 use tower_sessions_redis_store::RedisStore;
 
+use crate::handlers::auth::get_current_user;
 use crate::{
     app::AppState,
     handlers::auth::{login, logout, register},
@@ -38,6 +39,7 @@ pub fn app_routes(app_state: AppState) -> Router {
         )));
 
     Router::new()
+        .nest("/api", protected_routes(app_state.clone()))
         .nest("/auth", auth_routes())
         .fallback_service(
             ServeDir::new("./frontend/dist")
@@ -65,6 +67,15 @@ pub fn auth_routes() -> Router<AppState> {
     Router::new()
         .route("/register", post(register))
         .route("/login", post(login))
-        .route("/logout", post(logout))
         .layer(governor)
+}
+
+pub fn protected_routes(state: AppState) -> Router<AppState> {
+    Router::new()
+        .route("/me", get(get_current_user))
+        .route("/logout", post(logout))
+        .route_layer(middleware::from_fn_with_state(
+            state,
+            crate::middleware::auth::auth,
+        ))
 }

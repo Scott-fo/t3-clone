@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use axum::{Json, extract::State, http::StatusCode};
+use axum::{Extension, Json, extract::State, http::StatusCode};
 use secrecy::SecretString;
 use serde::Deserialize;
 use tower_sessions::Session;
@@ -10,6 +10,13 @@ use crate::{
     models::user::{NewUser, User},
     repositories::{Repository, session::SessionRepository},
 };
+
+#[tracing::instrument(skip(user))]
+pub async fn get_current_user(
+    Extension(user): Extension<dtos::user::User>,
+) -> Json<dtos::user::User> {
+    Json(user)
+}
 
 #[derive(Debug, Deserialize)]
 pub struct LogInRequest {
