@@ -1,7 +1,7 @@
 services:
   mysql:
     image: mysql:latest
-    container_name: mysql
+    container_name: mysql-t3-clone
     restart: always
     ports:
       - "3309:3306"
@@ -11,7 +11,7 @@ services:
       MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: root_password
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql_t3_clone_data:/var/lib/mysql
 
   redis:
     image: redis:latest
@@ -23,7 +23,7 @@ services:
       - redis_data:/data
 
 volumes:
-  mysql_data:
+  mysql_t3_clone_data:
   redis_data:
 
 

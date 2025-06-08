@@ -14,3 +14,10 @@ tracing = "0.1.41"
 tracing-bunyan-formatter = "0.3.10"
 tracing-log = "0.2.0"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+diesel = { version = "2.2.10", features = ["mysql", "r2d2", "chrono"] }
+chrono = { version = "0.4.41", features = ["serde"] }
+argon2 = { version = "0.5.3", features = ["std"] }
+anyhow = "1.0.98"
+uuid = { version = "1.17.0", features = ["v4", "serde"] }
+
+
