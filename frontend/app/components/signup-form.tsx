@@ -1,12 +1,6 @@
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -54,7 +48,6 @@ export default function SignupForm({
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Sign Up</CardTitle>
-          <CardDescription>Join your organisation in testing</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
