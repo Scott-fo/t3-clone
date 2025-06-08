@@ -2,7 +2,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::models::chat::Chat;
+use crate::{dtos, models::chat::Chat};
 
 use super::replicache::ReplicachePullModel;
 
@@ -66,5 +66,18 @@ impl ReplicachePullModel for Message {
 
     fn get_version(&self) -> i32 {
         self.version
+    }
+}
+
+impl From<Message> for dtos::message::Message {
+    fn from(value: Message) -> Self {
+        dtos::message::Message {
+            id: value.id,
+            chat_id: value.chat_id,
+            role: value.role,
+            body: value.body,
+            created_at: value.created_at.and_utc(),
+            updated_at: value.updated_at.and_utc(),
+        }
     }
 }

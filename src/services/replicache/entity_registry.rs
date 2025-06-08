@@ -1,4 +1,7 @@
-use crate::repositories::{Repository, chat::ChatRepository};
+use crate::{
+    dtos,
+    repositories::{Repository, chat::ChatRepository},
+};
 use std::collections::HashMap;
 
 use anyhow::Result;
@@ -29,7 +32,12 @@ impl EntityRegistry {
                 let chats = ChatRepository.find_by_ids(conn, ids)?;
                 Ok(chats
                     .into_iter()
-                    .map(|m| (m.id.clone(), serde_json::to_value(m).unwrap()))
+                    .map(|m| {
+                        (
+                            m.id.clone(),
+                            serde_json::to_value(dtos::chat::Chat::from(m)).unwrap(),
+                        )
+                    })
                     .collect())
             }),
         );
@@ -40,7 +48,12 @@ impl EntityRegistry {
                 let messages = MessageRepository.find_by_ids(conn, ids)?;
                 Ok(messages
                     .into_iter()
-                    .map(|m| (m.id.clone(), serde_json::to_value(m).unwrap()))
+                    .map(|m| {
+                        (
+                            m.id.clone(),
+                            serde_json::to_value(dtos::message::Message::from(m)).unwrap(),
+                        )
+                    })
                     .collect())
             }),
         );
