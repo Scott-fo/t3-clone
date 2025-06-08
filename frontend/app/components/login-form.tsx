@@ -26,7 +26,7 @@ export default function LoginForm({
 
   const mutation = useMutation({
     mutationFn: (data: { email: string; password: string }) =>
-      api.post("/api/auth/sign-in", data),
+      api.post("/api/auth/login", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user"] });
     },
