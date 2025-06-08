@@ -1,3 +1,5 @@
+pub mod chat;
+pub mod message;
 pub mod session;
 
 use anyhow::Result;
