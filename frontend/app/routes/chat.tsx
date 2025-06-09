@@ -1,14 +1,13 @@
 import ChatInput from "~/components/chat-input";
 import { useReplicache } from "~/contexts/ReplicacheContext";
-import { useSubscribe } from "replicache-react";
-import type { ReadTransaction } from "replicache";
-import { listMessagesForChat } from "~/domain/message";
 import { useCallback, useEffect, useRef } from "react";
 import { useAuth } from "~/contexts/AuthContext";
 import { nanoid } from "nanoid";
 import { MessageBubble } from "~/components/message-bubble";
 import type { Route } from "./+types/chat";
 import { useChatStream } from "~/contexts/ChatStreamContext";
+import { useMessageStore } from "~/stores/message";
+import type { Message } from "~/domain/message";
 
 export default function Page({ params }: Route.ComponentProps) {
   const rep = useReplicache();
@@ -16,24 +15,49 @@ export default function Page({ params }: Route.ComponentProps) {
 
   const { startStream, pendingResponses } = useChatStream();
 
-  const messages = useSubscribe(
-    rep,
-    async (tx: ReadTransaction) => listMessagesForChat(tx, params.thread_id),
-    {
-      default: [],
-      dependencies: [params.thread_id],
-    }
-  );
+  const messages = useMessageStore((state) => state.data);
+  const { sync, cleanup, appendMessage } = useMessageStore.getState();
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const pendingRef = useRef<HTMLDivElement>(null);
+  const hasScrolledToBottomRef = useRef<boolean>(false);
 
   useEffect(() => {
-    if (messages.length === 0) return;
+    sync(rep, params.thread_id);
+    return () => {
+      cleanup();
+    };
+  }, [rep, params.thread_id, sync, cleanup]);
+
+  useEffect(() => {
+    hasScrolledToBottomRef.current = false;
+  }, [params.thread_id]);
+
+  useEffect(() => {
+    if (messages.length === 0 || hasScrolledToBottomRef.current) return;
+
     containerRef.current?.scrollTo({
       top: containerRef.current.scrollHeight,
-      behavior: "smooth",
+      behavior: "auto",
     });
+
+    hasScrolledToBottomRef.current = true;
   }, [messages]);
+
+  const isPending = pendingResponses[params.thread_id] !== undefined;
+
+  useEffect(() => {
+    if (isPending && pendingRef.current) {
+      const animationFrameId = requestAnimationFrame(() => {
+        pendingRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
+      });
+
+      return () => cancelAnimationFrame(animationFrameId);
+    }
+  }, [isPending, pendingRef]);
 
   const onSendMessage = useCallback(
     async (msg: string) => {
@@ -56,7 +80,7 @@ export default function Page({ params }: Route.ComponentProps) {
         });
       }
 
-      await rep.mutate.createMessage({
+      const usr_msg = {
         id: nanoid(),
         chat_id: params.thread_id,
         user_id: user.id,
@@ -65,7 +89,10 @@ export default function Page({ params }: Route.ComponentProps) {
         created_at: now,
         updated_at: now,
         version: 1,
-      });
+      } as Message;
+
+      appendMessage(usr_msg);
+      rep.mutate.createMessage(usr_msg);
 
       startStream(params.thread_id);
     },
@@ -88,6 +115,7 @@ export default function Page({ params }: Route.ComponentProps) {
         ))}
         {pendingResponses[params.thread_id] !== undefined && (
           <MessageBubble
+            ref={pendingRef}
             key="pending"
             id="pending"
             role="assistant"
@@ -113,7 +141,7 @@ export default function Page({ params }: Route.ComponentProps) {
             <ChatInput
               handleSubmit={onSendMessage}
               chatId={params.thread_id}
-              disabled={false}
+              disabled={isPending}
             />
           </div>
         </div>

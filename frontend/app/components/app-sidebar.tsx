@@ -46,7 +46,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenuButton asChild>
-          <Button onClick={() => navigate(`/chat/${nanoid()}`)}>
+          <Button
+            className="py-5"
+            onClick={() => navigate(`/chat/${nanoid()}`)}
+          >
             New Chat
           </Button>
         </SidebarMenuButton>

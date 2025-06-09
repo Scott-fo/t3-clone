@@ -9,6 +9,7 @@ diesel::table! {
         #[max_length = 255]
         title -> Nullable<Varchar>,
         archived -> Bool,
+        pinned -> Bool,
         version -> Integer,
         created_at -> Timestamp,
         updated_at -> Timestamp,

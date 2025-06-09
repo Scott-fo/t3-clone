@@ -25,7 +25,6 @@ impl EntityRegistry {
             patch_fns: HashMap::new(),
         };
 
-        // TODO: Make these dtos so we dont just return the whole thing
         registry.register(
             "chat",
             Box::new(move |conn, ids| {

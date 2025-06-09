@@ -3,7 +3,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{RwLock, mpsc};
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize)]
@@ -32,7 +32,7 @@ impl SseManager {
 
     pub async fn add_client(&self, user_id: String) -> (String, mpsc::Receiver<SseMessage>) {
         let client_id = Uuid::new_v4().to_string();
-        let (sender, receiver) = mpsc::channel(32);
+        let (sender, receiver) = mpsc::channel(4096);
 
         let new_client = Client { user_id, sender };
 
@@ -64,7 +64,7 @@ impl SseManager {
                 }
             }
         }
-        info!(user_id, message_type = %msg.event_type, clients_sent = sent_count, "Sent message to user.");
+        debug!(user_id, message_type = %msg.event_type, clients_sent = sent_count, "Sent message to user.");
     }
 
     pub async fn replicache_poke(&self, user_id: &str) {

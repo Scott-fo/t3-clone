@@ -104,6 +104,7 @@ impl ChatRepository {
             id: chat.id,
             user_id: chat.user_id,
             title: chat.title,
+            pinned: chat.pinned,
             archived: chat.archived,
             version: chat.version,
             created_at: chat.created_at,

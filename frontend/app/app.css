@@ -133,3 +133,19 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    border-radius: 9999px;
+    background-color: var(--sidebar);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    background-color: var(--muted-foreground);
+}
+
+

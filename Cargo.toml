@@ -31,6 +31,8 @@ tokio-stream = { version = "0.1.17" }
 axum-extra = "0.10.1"
 futures-util = "0.3.31"
 async-stream = "0.3.6"
+reqwest = { version = "0.12.19", features = ["json", "stream"] }
+reqwest-eventsource = "0.6.0"
 
 
 

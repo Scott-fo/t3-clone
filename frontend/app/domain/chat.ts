@@ -1,9 +1,11 @@
 import type { ReadTransaction, WriteTransaction } from "replicache";
 
+// fix this type.
 export type Chat = {
   readonly id: string;
   readonly user_id: string;
   readonly title?: string | null;
+  readonly pinned?: boolean;
   readonly archived?: boolean;
   readonly version: number;
   readonly created_at: string;

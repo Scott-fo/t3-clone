@@ -2,6 +2,7 @@ import {
   ArrowPathIcon,
   ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
+import { forwardRef } from "react";
 import Markdown from "react-markdown";
 
 const CitationLink = ({
@@ -33,59 +34,60 @@ const CitationLink = ({
   );
 };
 
-export const MessageBubble = ({
-  id,
-  role,
-  msg,
-}: {
+interface Props {
   id: string;
   role: "user" | "assistant";
   msg: string;
-}) => {
-  const isUser = role === "user";
+}
 
-  return (
-    <div
-      className={`flex flex-col max-w-3xl my-10 mx-auto ${
-        isUser ? "items-end" : "items-start"
-      }`}
-    >
+export const MessageBubble = forwardRef<HTMLDivElement, Props>(
+  ({ id, role, msg }, ref) => {
+    const isUser = role === "user";
+
+    return (
       <div
-        className={`max-w-[75%] rounded-lg whitespace-pre-wrap p-3 ${
-          isUser
-            ? "bg-primary text-primary-foreground rounded-br-none"
-            : "bg-background text-foreground rounded-bl-none"
+        ref={ref}
+        className={`flex flex-col max-w-3xl min-h-20 my-10 mx-auto ${
+          isUser ? "items-end" : "items-start"
         }`}
       >
-        {!isUser && msg === "" && id === "pending" ? (
-          <p className="flex items-center">
-            <ArrowPathIcon className="mx-auto mr-2 h-4 w-4 animate-spin text-primary-500" />
-            Thinking...
-          </p>
-        ) : !isUser && msg.startsWith("Error: ") ? (
-          <span className="text-red-600">{msg}</span>
-        ) : (
-          <div className="break-words">
-            <Markdown
-              components={{
-                a: CitationLink,
-                code({ className, children, ...props }) {
-                  return (
-                    <code
-                      className={`break-words whitespace-pre-wrap ${className}`}
-                      {...props}
-                    >
-                      {children}
-                    </code>
-                  );
-                },
-              }}
-            >
-              {msg}
-            </Markdown>
-          </div>
-        )}
+        <div
+          className={`max-w-[75%] rounded-lg whitespace-pre-wrap p-3 ${
+            isUser
+              ? "bg-primary text-primary-foreground rounded-br-none"
+              : "bg-background text-foreground rounded-bl-none"
+          }`}
+        >
+          {!isUser && msg === "" && id === "pending" ? (
+            <p className="flex items-center">
+              <ArrowPathIcon className="mx-auto mr-2 h-4 w-4 animate-spin text-primary-500" />
+              Thinking...
+            </p>
+          ) : !isUser && msg.startsWith("Error: ") ? (
+            <span className="text-red-600">{msg}</span>
+          ) : (
+            <div className="break-words">
+              <Markdown
+                components={{
+                  a: CitationLink,
+                  code({ className, children, ...props }) {
+                    return (
+                      <code
+                        className={`break-words whitespace-pre-wrap ${className}`}
+                        {...props}
+                      >
+                        {children}
+                      </code>
+                    );
+                  },
+                }}
+              >
+                {msg}
+              </Markdown>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  }
+);

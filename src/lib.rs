@@ -2,6 +2,7 @@ pub mod app;
 pub mod configuration;
 pub mod telemetry;
 
+mod ai;
 mod auth;
 mod dtos;
 mod handlers;

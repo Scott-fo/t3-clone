@@ -50,6 +50,7 @@ impl ChatService {
             id: args.id,
             user_id: user_id.to_string(),
             title: None,
+            pinned: false,
             archived: false,
             version: 1,
             created_at: args.created_at.naive_utc(),
@@ -77,6 +78,7 @@ impl ChatService {
 
             let changeset = Changeset {
                 title: args.title,
+                pinned: args.pinned,
                 archived: args.archived,
                 version: existing.version + 1,
                 updated_at: args.updated_at.naive_utc(),
@@ -147,6 +149,7 @@ impl ChatService {
                 id: chat.id,
                 user_id: chat.user_id,
                 title: chat.title,
+                pinned: chat.pinned,
                 archived: chat.archived,
                 version: chat.version,
                 created_at: chat.created_at,

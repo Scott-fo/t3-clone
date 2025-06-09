@@ -13,6 +13,7 @@ pub struct Chat {
     pub user_id: String,
     pub title: Option<String>,
     pub archived: bool,
+    pub pinned: bool,
     pub version: i32,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -23,6 +24,7 @@ pub struct Chat {
 pub struct Changeset {
     pub title: Option<String>,
     pub archived: Option<bool>,
+    pub pinned: Option<bool>,
     pub version: i32,
     pub updated_at: NaiveDateTime,
 }
@@ -41,6 +43,7 @@ pub struct UpdateArgs {
     pub id: String,
     pub title: Option<String>,
     pub archived: Option<bool>,
+    pub pinned: Option<bool>,
     pub updated_at: DateTime<Utc>,
 }
 
@@ -49,6 +52,7 @@ pub struct ChatWithMessages {
     pub id: String,
     pub user_id: String,
     pub title: Option<String>,
+    pub pinned: bool,
     pub archived: bool,
     pub version: i32,
     pub created_at: NaiveDateTime,
@@ -75,9 +79,10 @@ impl From<Chat> for dtos::chat::Chat {
         dtos::chat::Chat {
             id: value.id,
             title: value.title,
+            pinned: value.pinned,
             archived: value.archived,
             created_at: value.created_at.and_utc(),
-            updated_at: value.created_at.and_utc(),
+            updated_at: value.updated_at.and_utc(),
         }
     }
 }

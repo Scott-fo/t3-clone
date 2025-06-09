@@ -9,6 +9,9 @@ import {
 import { useReplicache } from "./ReplicacheContext";
 import { useSSE } from "./SSEContext";
 import { useAuth } from "./AuthContext";
+import type { Message } from "~/domain/message";
+import { useMessageStore } from "~/stores/message";
+import { nanoid } from "nanoid";
 
 type StreamState = {
   pending: string;
@@ -70,24 +73,25 @@ export const ChatStreamProvider: React.FC<Props> = ({ children }) => {
       const { chat_id, msg_id } = r.data;
       const state = streams[chat_id];
 
-      if (state) {
+      if (state && user) {
         const now = new Date().toISOString();
 
-        const id = `${msg_id}-response`;
+        const id = msg_id ? msg_id : nanoid();
 
-        if (user) {
-          rep.mutate.createMessage({
-            id,
-            chat_id,
-            user_id: user?.id,
-            role: "assistant",
-            body: state.pending,
-            created_at: now,
-            updated_at: now,
-            version: 1,
-          });
-        }
+        const final_msg = {
+          id,
+          chat_id,
+          user_id: user?.id,
+          role: "assistant",
+          body: state.pending,
+          created_at: now,
+          updated_at: now,
+          version: 1,
+        } as Message;
 
+        useMessageStore.getState().appendMessage(final_msg);
+
+        rep.mutate.createMessage(final_msg);
         rep.mutate.updateChat({
           id: chat_id,
           updated_at: now,
@@ -107,7 +111,7 @@ export const ChatStreamProvider: React.FC<Props> = ({ children }) => {
       const { chat_id, error } = r.data;
       const state = streams[chat_id];
 
-      if (state) {
+      if (state && user) {
         state.pending = `Error: ${error}`;
         setPendingResponses((p) => ({
           ...p,
@@ -116,19 +120,17 @@ export const ChatStreamProvider: React.FC<Props> = ({ children }) => {
           },
         }));
 
-        if (user) {
-          const now = new Date().toISOString();
-          rep.mutate.createMessage({
-            id: `${chat_id}-error-${Date.now()}`,
-            chat_id,
-            user_id: user.id,
-            role: "assistant",
-            body: state.pending,
-            created_at: now,
-            updated_at: now,
-            version: 1,
-          });
-        }
+        const now = new Date().toISOString();
+        rep.mutate.createMessage({
+          id: `${chat_id}-error-${Date.now()}`,
+          chat_id,
+          user_id: user.id,
+          role: "assistant",
+          body: state.pending,
+          created_at: now,
+          updated_at: now,
+          version: 1,
+        });
 
         delete streams[chat_id];
         setPendingResponses((p) => {

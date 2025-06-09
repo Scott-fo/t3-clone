@@ -58,7 +58,7 @@ impl Repository<Message, Changeset> for MessageRepository {
     fn create(&self, conn: &mut MysqlConnection, entity: &Message) -> Result<Message> {
         use crate::schema::messages::dsl::messages;
 
-        diesel::insert_into(messages)
+        diesel::insert_or_ignore_into(messages)
             .values(entity)
             .execute(conn)
             .context(format!("Error creating message {}", entity.id))?;

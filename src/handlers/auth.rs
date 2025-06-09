@@ -7,6 +7,7 @@ use tower_sessions::Session;
 use crate::{
     app::AppState,
     dtos,
+    models::session::Session as DbSession,
     models::user::{NewUser, User},
     repositories::{Repository, session::SessionRepository},
 };
@@ -136,6 +137,7 @@ pub async fn logout(
 )]
 pub async fn register(
     State(state): State<AppState>,
+    session: Session,
     Json(payload): Json<NewUser>,
 ) -> Result<(StatusCode, Json<dtos::user::User>), (StatusCode, String)> {
     let mut conn = state
@@ -173,6 +175,30 @@ pub async fn register(
     })?;
 
     tracing::info!("New user registered successfully: {}", new_user.email);
+    let new_session = DbSession::new(&new_user.id);
+
+    let db_session = SessionRepository
+        .create(&mut conn, &new_session)
+        .context("Failed to create database session")
+        .map_err(|e| {
+            tracing::error!("Database session creation failed: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to process your session".to_string(),
+            )
+        })?;
+
+    session
+        .insert("session_id", &db_session.id)
+        .await
+        .context("Failed to store session id in user's cookie")
+        .map_err(|e| {
+            tracing::error!("Cookie session insertion failed: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to process your session".to_string(),
+            )
+        })?;
 
     Ok((StatusCode::CREATED, Json(dtos::user::User::from(new_user))))
 }

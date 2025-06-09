@@ -199,6 +199,7 @@ fn collect_all_entities(
             id: cwm.id,
             user_id: cwm.user_id,
             title: cwm.title,
+            pinned: cwm.pinned,
             archived: cwm.archived,
             version: cwm.version,
             created_at: cwm.created_at,
