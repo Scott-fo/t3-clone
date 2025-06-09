@@ -4,6 +4,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { forwardRef } from "react";
 import Markdown from "react-markdown";
+import { CodeBlock } from "./code-block";
+import remarkGfm from "remark-gfm";
 
 const CitationLink = ({
   href,
@@ -52,9 +54,9 @@ export const MessageBubble = forwardRef<HTMLDivElement, Props>(
         }`}
       >
         <div
-          className={`max-w-[75%] rounded-lg whitespace-pre-wrap p-3 ${
+          className={`rounded-lg whitespace-pre-wrap p-3 ${
             isUser
-              ? "bg-primary text-primary-foreground rounded-br-none"
+              ? "bg-primary max-w-[75%] text-primary-foreground rounded-br-none"
               : "bg-background text-foreground rounded-bl-none"
           }`}
         >
@@ -68,12 +70,19 @@ export const MessageBubble = forwardRef<HTMLDivElement, Props>(
           ) : (
             <div className="break-words">
               <Markdown
+                remarkPlugins={[remarkGfm]}
                 components={{
                   a: CitationLink,
-                  code({ className, children, ...props }) {
-                    return (
+                  code({ node, className, children, ...props }) {
+                    const match = /language-(\w+)/.exec(className || "");
+                    return match ? (
+                      <CodeBlock
+                        language={match[1]}
+                        value={String(children).replace(/\n$/, "")}
+                      />
+                    ) : (
                       <code
-                        className={`break-words whitespace-pre-wrap ${className}`}
+                        className="custom-scrollbar break-words rounded-md bg-secondary px-1.5 py-0.5 font-mono text-sm font-semibold text-secondary-foreground"
                         {...props}
                       >
                         {children}
