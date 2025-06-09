@@ -178,7 +178,7 @@ async fn process_stream(
 
                         let error_payload = json!({
                             "chat_id": chat_id,
-                            "error": error_msg.clone(),
+                            "error": format!("Error: {}", error_msg.clone()),
                         });
 
                         sse_manager
