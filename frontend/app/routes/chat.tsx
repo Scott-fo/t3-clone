@@ -8,10 +8,13 @@ import { useAuth } from "~/contexts/AuthContext";
 import { nanoid } from "nanoid";
 import { MessageBubble } from "~/components/message-bubble";
 import type { Route } from "./+types/chat";
+import { useChatStream } from "~/contexts/ChatStreamContext";
 
 export default function Page({ params }: Route.ComponentProps) {
   const rep = useReplicache();
   const { user } = useAuth();
+
+  const { startStream, pendingResponses } = useChatStream();
 
   const messages = useSubscribe(
     rep,
@@ -63,7 +66,8 @@ export default function Page({ params }: Route.ComponentProps) {
         updated_at: now,
         version: 1,
       });
-      // startStream(params.threadId);
+
+      startStream(params.thread_id);
     },
     [messages.length, params.thread_id, rep, user?.id]
   );
@@ -82,6 +86,14 @@ export default function Page({ params }: Route.ComponentProps) {
             msg={msg.body}
           />
         ))}
+        {pendingResponses[params.thread_id] !== undefined && (
+          <MessageBubble
+            key="pending"
+            id="pending"
+            role="assistant"
+            msg={pendingResponses[params.thread_id].content}
+          />
+        )}
       </div>
 
       <div className="w-full max-w-3xl mx-auto shrink-0 pt-2">
