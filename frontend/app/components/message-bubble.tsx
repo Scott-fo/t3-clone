@@ -68,7 +68,7 @@ export const MessageBubble = forwardRef<HTMLDivElement, Props>(
           ) : !isUser && msg.startsWith("Error: ") ? (
             <span className="text-red-600">{msg}</span>
           ) : (
-            <div className="break-words">
+            <div className="prose break-words">
               <Markdown
                 remarkPlugins={[remarkGfm]}
                 components={{

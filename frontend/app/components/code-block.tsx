@@ -1,7 +1,7 @@
 import { ClipboardDocumentIcon } from "@heroicons/react/24/outline";
 import { type FC, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { tomorrow } from "react-syntax-highlighter/dist/cjs/styles/prism";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism";
 
 interface Props {
   language: string;
@@ -21,7 +21,7 @@ export const CodeBlock: FC<Props> = ({ language, value }) => {
 
   return (
     <div className="relative my-2 rounded-lg bg-muted font-sans text-sm">
-      <div className="flex items-center justify-between rounded-t-lg bg-primary px-4 py-1.5">
+      <div className="flex items-center justify-between rounded-t-lg bg-primary/80 px-4 py-1.5">
         <span className="text-xs text-primary-foreground">{language}</span>
         <button
           className="flex items-center gap-1.5 text-xs text-primary-foreground hover:font-semibold"
@@ -39,7 +39,7 @@ export const CodeBlock: FC<Props> = ({ language, value }) => {
       </div>
       <SyntaxHighlighter
         language={language}
-        style={tomorrow}
+        style={vscDarkPlus}
         customStyle={{
           margin: 0,
           padding: "1rem",
