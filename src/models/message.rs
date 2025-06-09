@@ -55,6 +55,11 @@ pub struct UpdateArgs {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeleteArgs {
+    pub id: String,
+}
+
 impl ReplicachePullModel for Message {
     fn resource_prefix() -> &'static str {
         "message"

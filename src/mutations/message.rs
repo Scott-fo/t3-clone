@@ -5,7 +5,7 @@ use serde::Deserialize;
 
 use crate::ai;
 use crate::app::AppState;
-use crate::models::message::{CreateArgs, Message, UpdateArgs};
+use crate::models::message::{CreateArgs, DeleteArgs, Message, UpdateArgs};
 
 use super::handler::Mutation;
 
@@ -17,7 +17,7 @@ pub enum MessageMutation {
     #[serde(rename = "updateMessage")]
     Update(UpdateArgs),
     #[serde(rename = "deleteMessage")]
-    Delete(UpdateArgs),
+    Delete(DeleteArgs),
 }
 
 impl MessageMutation {}

@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use serde::Deserialize;
 
 use crate::app::AppState;
-use crate::models::chat::{CreateArgs, UpdateArgs};
+use crate::models::chat::{CreateArgs, DeleteArgs, UpdateArgs};
 
 use super::handler::Mutation;
 
@@ -15,7 +15,7 @@ pub enum ChatMutation {
     #[serde(rename = "updateChat")]
     Update(UpdateArgs),
     #[serde(rename = "deleteChat")]
-    Delete(UpdateArgs),
+    Delete(DeleteArgs),
 }
 
 impl ChatMutation {}

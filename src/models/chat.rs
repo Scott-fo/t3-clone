@@ -47,6 +47,11 @@ pub struct UpdateArgs {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeleteArgs {
+    pub id: String,
+}
+
 #[derive(Debug, Serialize)]
 pub struct ChatWithMessages {
     pub id: String,

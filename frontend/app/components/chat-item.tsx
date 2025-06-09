@@ -42,7 +42,7 @@ export function ChatItem({ item, isActive, onPin, onDelete }: ChatItemProps) {
         className="
           absolute right-0 top-0 h-full
           flex items-center justify-end
-          bg-gradient-to-l from-sidebar via-sidebar/80 to-transparent
+          bg-gradient-to-l from-sidebar-accent via-sidebar-accent/80 to-transparent
           pl-10 opacity-0 transition-opacity duration-200
           group-hover/chat:opacity-100"
       >
