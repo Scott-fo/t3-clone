@@ -30,13 +30,19 @@ export function ChatItem({ item, isActive, onPin, onDelete }: ChatItemProps) {
     onDelete(item.id);
   };
 
+  // can't get the tooltip to work on sidebarmenu button, so ill just wrap it
   return (
     <SidebarMenuItem className="group/chat relative">
-      <SidebarMenuButton isActive={isActive} asChild>
-        <Link to={href("/chat/:thread_id", { thread_id: item.id })}>
-          <span className="truncate pr-10">{item.title || "New chat"}</span>
-        </Link>
-      </SidebarMenuButton>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <SidebarMenuButton isActive={isActive} asChild>
+            <Link to={href("/chat/:thread_id", { thread_id: item.id })}>
+              <span className="truncate pr-10">{item.title || "New chat"}</span>
+            </Link>
+          </SidebarMenuButton>
+        </TooltipTrigger>
+        <TooltipContent side="right">{item.title || "New chat"}</TooltipContent>
+      </Tooltip>
 
       <div
         className="
