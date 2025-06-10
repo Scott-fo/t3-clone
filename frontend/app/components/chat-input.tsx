@@ -30,6 +30,12 @@ interface Props {
 const modelList = [
   {
     provider: "openai",
+    model: "o4-mini",
+    display: "o4 mini",
+    logo: OpenAI,
+  },
+  {
+    provider: "openai",
     model: "gpt-4.1",
     display: "GPT 4.1",
     logo: OpenAI,
