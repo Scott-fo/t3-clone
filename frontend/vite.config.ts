@@ -3,12 +3,13 @@ import { defineConfig } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { reactRouter } from "@react-router/dev/vite";
+import svgr from "vite-plugin-svgr";
 
 export default defineConfig(({ command }) => {
   const isBuild = command === "build";
 
   return {
-    plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
+    plugins: [tailwindcss(), reactRouter(), tsconfigPaths(), svgr()],
 
     resolve: {
       alias: [

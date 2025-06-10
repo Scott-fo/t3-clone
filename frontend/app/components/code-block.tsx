@@ -1,7 +1,7 @@
 import { ClipboardDocumentIcon } from "@heroicons/react/24/outline";
 import { type FC, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism";
+import { oneLight } from "react-syntax-highlighter/dist/cjs/styles/prism";
 
 interface Props {
   language: string;
@@ -39,7 +39,7 @@ export const CodeBlock: FC<Props> = ({ language, value }) => {
       </div>
       <SyntaxHighlighter
         language={language}
-        style={vscDarkPlus}
+        style={oneLight}
         customStyle={{
           margin: 0,
           padding: "1rem",

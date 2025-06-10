@@ -37,7 +37,7 @@ export function ChatItem({ item, isActive, onPin, onDelete }: ChatItemProps) {
         <TooltipTrigger asChild>
           <SidebarMenuButton isActive={isActive} asChild>
             <Link to={href("/chat/:thread_id", { thread_id: item.id })}>
-              <span className="truncate pr-10">{item.title || "New chat"}</span>
+              <span className="truncate ">{item.title || "New chat"}</span>
             </Link>
           </SidebarMenuButton>
         </TooltipTrigger>
@@ -48,8 +48,8 @@ export function ChatItem({ item, isActive, onPin, onDelete }: ChatItemProps) {
         className="
           absolute right-0 top-0 h-full
           flex items-center justify-end
-          bg-gradient-to-l from-sidebar-accent via-sidebar-accent/80 to-transparent
-          pl-10 opacity-0 transition-opacity duration-200
+          bg-gradient-to-l from-sidebar-accent via-sidebar-accent/80 to-sidebar-accent/60
+          opacity-0 transition-opacity duration-200
           group-hover/chat:opacity-100"
       >
         <TooltipProvider delayDuration={300}>

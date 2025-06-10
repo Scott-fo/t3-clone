@@ -14,15 +14,9 @@ pub struct SseMessage {
     pub data: Option<Value>,
 }
 
-#[derive(Debug)]
-struct Client {
-    user_id: String,
-    sender: mpsc::Sender<SseMessage>,
-}
-
 #[derive(Debug, Clone, Default)]
 pub struct SseManager {
-    clients: Arc<RwLock<HashMap<String, Client>>>,
+    clients: Arc<RwLock<HashMap<String, HashMap<String, mpsc::Sender<SseMessage>>>>>,
 }
 
 impl SseManager {
@@ -34,20 +28,30 @@ impl SseManager {
         let client_id = Uuid::new_v4().to_string();
         let (sender, receiver) = mpsc::channel(4096);
 
-        let new_client = Client { user_id, sender };
+        let mut clients = self.clients.write().await;
+        let user_clients = clients.entry(user_id.clone()).or_default();
 
-        self.clients
-            .write()
-            .await
-            .insert(client_id.clone(), new_client);
+        user_clients.insert(client_id.clone(), sender);
 
         info!(client_id, "SSE client added.");
         (client_id, receiver)
     }
 
-    pub async fn remove_client(&self, client_id: &str) {
-        if self.clients.write().await.remove(client_id).is_some() {
-            info!(client_id, "SSE client removed.");
+    pub async fn remove_client(&self, user_id: &str, client_id: &str) {
+        let mut clients = self.clients.write().await;
+        let mut user_entry_is_empty = false;
+
+        if let Some(user_clients) = clients.get_mut(user_id) {
+            if user_clients.remove(client_id).is_some() {
+                info!(%user_id, %client_id, "SSE client removed");
+            }
+
+            user_entry_is_empty = user_clients.is_empty();
+        }
+
+        if user_entry_is_empty {
+            clients.remove(user_id);
+            debug!(%user_id, "Removed empty user entry from sse manager");
         }
     }
 
@@ -55,16 +59,17 @@ impl SseManager {
         let clients = self.clients.read().await;
         let mut sent_count = 0;
 
-        for client in clients.values() {
-            if client.user_id == user_id {
-                if client.sender.try_send(msg.clone()).is_ok() {
+        if let Some(user_clients) = clients.get(user_id) {
+            for sender in user_clients.values() {
+                if sender.try_send(msg.clone()).is_ok() {
                     sent_count += 1;
                 } else {
-                    warn!(user_id, "Dropping SSE message; client channel is full.");
+                    warn!(%user_id, "Dropping SSE manager; client channel is full");
                 }
             }
         }
-        debug!(user_id, message_type = %msg.event_type, clients_sent = sent_count, "Sent message to user.");
+
+        debug!(%user_id, message_type = %msg.event_type, clients_sent = sent_count, "Sent message to user.");
     }
 
     pub async fn replicache_poke(&self, user_id: &str) {

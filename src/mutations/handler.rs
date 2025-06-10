@@ -5,7 +5,7 @@ use serde_json::json;
 
 use crate::app::AppState;
 
-use super::{chat::ChatMutation, message::MessageMutation};
+use super::{active_model::ActiveModelMutation, chat::ChatMutation, message::MessageMutation};
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -42,6 +42,13 @@ pub fn parse_mutation(raw: RawMutation) -> Result<Box<dyn Mutation>, serde_json:
                 "args": raw.args
             }))?;
             Ok(Box::new(msg_mutation))
+        }
+        "createActiveModel" | "updateActiveModel" | "deleteActiveModel" => {
+            let active_model_mutation: ActiveModelMutation = serde_json::from_value(json!({
+                "name": raw.name,
+                "args": raw.args
+            }))?;
+            Ok(Box::new(active_model_mutation))
         }
         _ => Err(serde_json::Error::custom(format!(
             "Unknown mutation type: {}",

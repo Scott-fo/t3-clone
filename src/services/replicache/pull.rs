@@ -211,6 +211,10 @@ fn collect_all_entities(
 
     collect_entity_type(&mut map, chats);
     collect_entity_type(&mut map, messages);
+    collect_entity_type(
+        &mut map,
+        services.active_model_service.list_for_user(conn, user_id)?,
+    );
 
     Ok(map)
 }

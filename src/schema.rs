@@ -1,6 +1,22 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    active_models (id) {
+        #[max_length = 255]
+        id -> Varchar,
+        #[max_length = 255]
+        user_id -> Varchar,
+        #[max_length = 255]
+        provider -> Varchar,
+        #[max_length = 255]
+        model -> Varchar,
+        version -> Integer,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     chats (id) {
         #[max_length = 255]
         id -> Varchar,
@@ -84,6 +100,7 @@ diesel::table! {
 }
 
 diesel::allow_tables_to_appear_in_same_query!(
+    active_models,
     chats,
     messages,
     replicache_client_groups,

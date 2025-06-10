@@ -178,7 +178,7 @@ async fn process_stream(
 
                         let error_payload = json!({
                             "chat_id": chat_id,
-                            "error": format!("Error: {}", error_msg.clone()),
+                            "error": error_msg.clone(),
                         });
 
                         sse_manager
@@ -212,9 +212,7 @@ async fn process_stream(
 }
 
 pub async fn generate_title(first_message: &str) -> Result<String> {
-    info!("Generating title for new chat...");
-
-    const TITLE_MODEL: &str = "gpt-4o-mini";
+    const TITLE_MODEL: &str = "gpt-4.1-nano";
 
     let api_key = env::var("OPENAI_API_KEY").context("OPENAI_API_KEY must be set")?;
     let client = Client::new();
@@ -258,6 +256,5 @@ pub async fn generate_title(first_message: &str) -> Result<String> {
         .map(|content| content.text.clone())
         .context("OpenAI response did not contain valid output text")?;
 
-    info!(%title, "Successfully generated chat title.");
     Ok(title)
 }

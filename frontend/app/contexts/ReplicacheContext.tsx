@@ -9,6 +9,7 @@ import {
 import { ChatMutators } from "~/domain/chat";
 import { MessageMutators } from "~/domain/message";
 import { useSSE } from "./SSEContext";
+import { ActiveModelMutators } from "~/domain/active-model";
 
 type ReplicacheProviderProps = {
   userId: string;
@@ -20,6 +21,7 @@ const ReplicacheContext = createContext<Replicache<any> | null>(null);
 const Mutators = {
   ...ChatMutators,
   ...MessageMutators,
+  ...ActiveModelMutators,
 };
 
 export type ReplicacheType = typeof Mutators & MutatorDefs;

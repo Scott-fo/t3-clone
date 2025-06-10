@@ -1,6 +1,6 @@
 use crate::{
     dtos,
-    repositories::{Repository, chat::ChatRepository},
+    repositories::{Repository, active_model::ActiveModelRepository, chat::ChatRepository},
 };
 use std::collections::HashMap;
 
@@ -51,6 +51,22 @@ impl EntityRegistry {
                         (
                             m.id.clone(),
                             serde_json::to_value(dtos::message::Message::from(m)).unwrap(),
+                        )
+                    })
+                    .collect())
+            }),
+        );
+
+        registry.register(
+            "activeModel",
+            Box::new(move |conn, ids| {
+                let active_models = ActiveModelRepository.find_by_ids(conn, ids)?;
+                Ok(active_models
+                    .into_iter()
+                    .map(|m| {
+                        (
+                            m.id.clone(),
+                            serde_json::to_value(dtos::active_model::ActiveModel::from(m)).unwrap(),
                         )
                     })
                     .collect())

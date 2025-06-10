@@ -1,14 +1,23 @@
-import { Send } from "lucide-react";
+import { ChevronsUpDown, Send } from "lucide-react";
 import { useRef, useState } from "react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import OpenAI from "~/logos/openai-black.svg?react";
 
 import { AutosizeTextarea } from "~/components/ui/autosize-text-area";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
+import { useActiveModelStore } from "~/stores/active-model";
+import { useReplicache } from "~/contexts/ReplicacheContext";
+import { nanoid } from "nanoid";
 
 interface Props {
   handleSubmit: (text: string) => Promise<void>;
@@ -16,8 +25,27 @@ interface Props {
   chatId: string;
 }
 
-function ChatInput({ disabled, chatId, handleSubmit }: Props) {
+const modelList = [
+  {
+    provider: "openai",
+    model: "gpt-4.1",
+    display: "GPT 4.1",
+    logo: OpenAI,
+  },
+  {
+    provider: "openai",
+    model: "gpt-4.1-mini",
+    display: "GPT 4.1 mini",
+    logo: OpenAI,
+  },
+];
+
+function ChatInput({ disabled, handleSubmit }: Props) {
+  const rep = useReplicache();
+  const activeModel = useActiveModelStore((state) => state.data);
+
   const [messageValue, setMessageValue] = useState("");
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -66,7 +94,7 @@ function ChatInput({ disabled, chatId, handleSubmit }: Props) {
                   type="submit"
                   variant="default"
                   size="icon"
-                  disabled={!messageValue?.trim() || disabled}
+                  disabled={!messageValue?.trim() || disabled || !activeModel}
                   className="h-8 w-8 shrink-0 md:h-9 md:w-9"
                   aria-label="Send message"
                 >
@@ -77,6 +105,55 @@ function ChatInput({ disabled, chatId, handleSubmit }: Props) {
             </Tooltip>
           </div>
         </div>
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              role="combobox"
+              aria-expanded={popoverOpen}
+              className="w-fit justify-between text-xs"
+            >
+              {activeModel
+                ? `${
+                    modelList.find((m) => m.model === activeModel.model)
+                      ?.display ?? activeModel.model
+                  }`
+                : "Select a model"}
+              <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[250px] p-0" side="top" align="start">
+            {modelList.map(({ display, model, provider, logo: Logo }) => (
+              <Button
+                key={model}
+                variant="ghost"
+                className="w-full justify-start font-normal"
+                onClick={() => {
+                  if (activeModel) {
+                    rep.mutate.updateActiveModel({
+                      id: activeModel.id,
+                      model,
+                      provider,
+                      updated_at: new Date().toISOString(),
+                    });
+                  } else {
+                    rep.mutate.createActiveModel({
+                      id: nanoid(),
+                      model,
+                      provider,
+                      created_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString(),
+                    });
+                  }
+                  setPopoverOpen(false);
+                }}
+              >
+                <Logo />
+                {display}
+              </Button>
+            ))}
+          </PopoverContent>
+        </Popover>
       </form>
     </div>
   );
