@@ -25,6 +25,8 @@ interface Props {
   chatId: string;
 }
 
+// move this elsewhere and sync with server.
+// need to have an allowlist
 const modelList = [
   {
     provider: "openai",
@@ -64,7 +66,6 @@ function ChatInput({ disabled, handleSubmit }: Props) {
     ? modelList.find((m) => m.model === activeModel.model)
     : null;
 
-  // The logo component for the active model, if it exists
   const ActiveLogo = activeModelDetails?.logo;
 
   return (
