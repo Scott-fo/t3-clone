@@ -36,17 +36,14 @@ enum StreamEvent {
 #[derive(Deserialize, Debug)]
 struct ResponseObject {
     id: String,
-    status: String,
     output: Option<Vec<MessageOutput>>,
     error: Option<OpenAIError>,
 }
 
 #[derive(Deserialize, Debug)]
 struct MessageOutput {
-    id: String,
     #[serde(rename = "type")]
     output_type: String,
-    role: String,
     content: Vec<ContentPart>,
 }
 
@@ -59,7 +56,6 @@ struct ContentPart {
 
 #[derive(Deserialize, Debug)]
 struct OpenAIError {
-    code: String,
     message: String,
 }
 

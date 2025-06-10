@@ -18,9 +18,22 @@ interface ContentProps {
 }
 
 const UserMessageContent = ({ msg }: ContentProps) => (
-  <div className="prose break-words">
-    <Markdown>{msg}</Markdown>
-  </div>
+  <Markdown
+    remarkPlugins={[remarkGfm]}
+    components={{
+      a: CitationLink,
+      code({ className, children }) {
+        return (
+          <CodeBlock
+            language="text"
+            value={String(children).replace(/\n$/, "")}
+          />
+        );
+      },
+    }}
+  >
+    {msg}
+  </Markdown>
 );
 
 const CitationLink = ({
