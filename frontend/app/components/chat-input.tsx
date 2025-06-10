@@ -60,6 +60,13 @@ function ChatInput({ disabled, handleSubmit }: Props) {
     setMessageValue("");
   };
 
+  const activeModelDetails = activeModel
+    ? modelList.find((m) => m.model === activeModel.model)
+    : null;
+
+  // The logo component for the active model, if it exists
+  const ActiveLogo = activeModelDetails?.logo;
+
   return (
     <div>
       <form onSubmit={onSubmit} className="relative">
@@ -113,11 +120,9 @@ function ChatInput({ disabled, handleSubmit }: Props) {
               aria-expanded={popoverOpen}
               className="w-fit justify-between text-xs"
             >
-              {activeModel
-                ? `${
-                    modelList.find((m) => m.model === activeModel.model)
-                      ?.display ?? activeModel.model
-                  }`
+              {ActiveLogo && <ActiveLogo className=" h-4 w-4" />}
+              {activeModelDetails
+                ? activeModelDetails.display
                 : "Select a model"}
               <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
             </Button>
