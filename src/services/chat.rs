@@ -1,6 +1,6 @@
 use crate::{
     models::{
-        chat::{Changeset, Chat, ChatWithMessages, CreateArgs, UpdateArgs},
+        chat::{Changeset, Chat, ChatWithMessages, CreateArgs, ForkArgs, UpdateArgs},
         message::Message,
     },
     repositories::{Repository, chat::ChatRepository, message::MessageRepository},
@@ -52,6 +52,7 @@ impl ChatService {
             title: None,
             pinned: false,
             archived: false,
+            forked: args.forked,
             version: 1,
             created_at: args.created_at.naive_utc(),
             updated_at: args.updated_at.naive_utc(),
@@ -104,6 +105,41 @@ impl ChatService {
         })
     }
 
+    pub fn fork(&self, conn: &mut MysqlConnection, args: &ForkArgs, user_id: &str) -> Result<Chat> {
+        conn.transaction(|conn| {
+            let chat = Chat {
+                id: args.new_id.clone(),
+                user_id: user_id.to_string(),
+                title: Some(args.title.clone()),
+                pinned: false,
+                archived: false,
+                forked: true,
+                version: 1,
+                created_at: args.time.naive_utc(),
+                updated_at: args.time.naive_utc(),
+            };
+
+            let chat_id = self.repository.create(conn, &chat);
+
+            args.msgs.iter().for_each(|m| {
+                let message = Message {
+                    id: m.id.clone(),
+                    chat_id: args.new_id.clone(),
+                    user_id: user_id.to_string(),
+                    role: m.role.clone(),
+                    body: m.body.clone(),
+                    version: 1,
+                    created_at: m.created_at.naive_utc(),
+                    updated_at: m.updated_at.naive_utc(),
+                };
+
+                let _ = self.msg_repo.create(conn, &message);
+            });
+
+            chat_id
+        })
+    }
+
     pub fn get(&self, conn: &mut MysqlConnection, id: &str, user_id: &str) -> Result<Chat> {
         let chat = self
             .repository
@@ -151,6 +187,7 @@ impl ChatService {
                 title: chat.title,
                 pinned: chat.pinned,
                 archived: chat.archived,
+                forked: chat.forked,
                 version: chat.version,
                 created_at: chat.created_at,
                 updated_at: chat.updated_at,

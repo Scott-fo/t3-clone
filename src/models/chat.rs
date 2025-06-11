@@ -14,6 +14,7 @@ pub struct Chat {
     pub title: Option<String>,
     pub archived: bool,
     pub pinned: bool,
+    pub forked: bool,
     pub version: i32,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -34,6 +35,7 @@ pub struct CreateArgs {
     pub id: String,
     pub user_id: String,
     pub version: i32,
+    pub forked: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -52,6 +54,14 @@ pub struct DeleteArgs {
     pub id: String,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct ForkArgs {
+    pub new_id: String,
+    pub title: String,
+    pub time: DateTime<Utc>,
+    pub msgs: Vec<super::message::CreateArgs>,
+}
+
 #[derive(Debug, Serialize)]
 pub struct ChatWithMessages {
     pub id: String,
@@ -59,6 +69,7 @@ pub struct ChatWithMessages {
     pub title: Option<String>,
     pub pinned: bool,
     pub archived: bool,
+    pub forked: bool,
     pub version: i32,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -86,6 +97,7 @@ impl From<Chat> for dtos::chat::Chat {
             title: value.title,
             pinned: value.pinned,
             archived: value.archived,
+            forked: value.forked,
             created_at: value.created_at.and_utc(),
             updated_at: value.updated_at.and_utc(),
         }

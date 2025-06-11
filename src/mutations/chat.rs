@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use serde::Deserialize;
 
 use crate::app::AppState;
-use crate::models::chat::{CreateArgs, DeleteArgs, UpdateArgs};
+use crate::models::chat::{CreateArgs, DeleteArgs, ForkArgs, UpdateArgs};
 
 use super::handler::Mutation;
 
@@ -16,6 +16,8 @@ pub enum ChatMutation {
     Update(UpdateArgs),
     #[serde(rename = "deleteChat")]
     Delete(DeleteArgs),
+    #[serde(rename = "forkChat")]
+    Fork(ForkArgs),
 }
 
 impl ChatMutation {}
@@ -49,6 +51,13 @@ impl Mutation for ChatMutation {
                     .service_container
                     .chat_service
                     .delete(conn, &args.id, user_id)?;
+                Ok(Some(chat.id))
+            }
+            ChatMutation::Fork(args) => {
+                let chat = state
+                    .service_container
+                    .chat_service
+                    .fork(conn, args, user_id)?;
                 Ok(Some(chat.id))
             }
         }

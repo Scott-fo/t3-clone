@@ -7,6 +7,7 @@ pub struct Chat {
     pub title: Option<String>,
     pub pinned: bool,
     pub archived: bool,
+    pub forked: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

@@ -23,6 +23,7 @@ export default function Page({ params }: Route.ComponentProps) {
 
   const user = useUserStore((state) => state.data);
   const messages = useMessageStore((state) => state.data);
+  console.log({ messages });
   const { sync, cleanup, appendMessage } = useMessageStore.getState();
 
   const [showMessages, setShowMessages] = useState(false);
@@ -88,6 +89,7 @@ export default function Page({ params }: Route.ComponentProps) {
         rep.mutate.createChat({
           id: params.thread_id,
           user_id: user.id,
+          forked: false,
           created_at: now,
           updated_at: now,
           version: 1,
@@ -130,6 +132,7 @@ export default function Page({ params }: Route.ComponentProps) {
         {showMessages && <MessageList messages={messages} />}
         {showMessages && pendingResponses[params.thread_id] !== undefined && (
           <MessageBubble
+            chat_id={params.thread_id}
             ref={pendingRef}
             key="pending"
             id="pending"
@@ -163,6 +166,12 @@ export default function Page({ params }: Route.ComponentProps) {
 
 const MessageList = memo(({ messages }: { messages: Message[] }) => {
   return messages.map((msg) => (
-    <MessageBubble key={msg.id} id={msg.id} role={msg.role} msg={msg.body} />
+    <MessageBubble
+      key={msg.id}
+      id={msg.id}
+      chat_id={msg.chat_id}
+      role={msg.role}
+      msg={msg.body}
+    />
   ));
 });

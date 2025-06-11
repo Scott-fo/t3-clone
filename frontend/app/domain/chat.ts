@@ -1,4 +1,5 @@
 import type { ReadTransaction, WriteTransaction } from "replicache";
+import type { Message } from "./message";
 
 // fix this type.
 export type Chat = {
@@ -7,6 +8,7 @@ export type Chat = {
   readonly title?: string | null;
   readonly pinned?: boolean;
   readonly archived?: boolean;
+  readonly forked: boolean;
   readonly version: number;
   readonly created_at: string;
   readonly updated_at: string;
@@ -32,6 +34,30 @@ export const ChatMutators = {
 
   deleteChat: async (tx: WriteTransaction, { id }: { id: string }) => {
     await tx.del(`chat/${id}`);
+  },
+
+  forkChat: async (
+    tx: WriteTransaction,
+    {
+      new_id,
+      title,
+      time,
+      msgs,
+    }: { new_id: string; title: string; time: string; msgs: Message[] }
+  ) => {
+    const new_chat = {
+      id: new_id,
+      title,
+      forked: true,
+      updated_at: time,
+      created_at: time,
+    } as Chat;
+
+    await tx.set(`chat/${new_chat.id}`, new_chat);
+
+    for (const msg of msgs) {
+      await tx.set(`message/${msg.id}`, msg);
+    }
   },
 };
 

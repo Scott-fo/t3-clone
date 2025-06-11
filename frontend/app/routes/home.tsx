@@ -23,6 +23,7 @@ export default function Page() {
         id: new_chat_id,
         user_id: user.id,
         title: "test",
+        forked: false,
         archived: false,
         created_at: now,
         updated_at: now,

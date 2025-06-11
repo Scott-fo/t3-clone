@@ -6,11 +6,25 @@ import { forwardRef, memo } from "react";
 import Markdown from "react-markdown";
 import { CodeBlock } from "./code-block";
 import remarkGfm from "remark-gfm";
+import { SplitIcon } from "lucide-react";
+import { Button } from "./ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { useChatStore } from "~/stores/chat";
+import { useMessageStore } from "~/stores/message";
+import type { Chat } from "~/domain/chat";
+import type { Message } from "~/domain/message";
+import { nanoid } from "nanoid";
+import {
+  useReplicache,
+  type ReplicacheType,
+} from "~/contexts/ReplicacheContext";
+import type { Replicache } from "replicache";
 
 interface Props {
   id: string;
   role: "user" | "assistant";
   msg: string;
+  chat_id: string;
 }
 
 interface ContentProps {
@@ -84,12 +98,41 @@ const MarkdownCodeRenderer = memo(
   }
 );
 
+const forkChat = (
+  rep: Replicache<ReplicacheType>,
+  break_id: string,
+  chat: Chat,
+  msgs: Message[]
+) => {
+  const new_id = nanoid();
+
+  const idx = msgs.findIndex((m) => m.id === break_id);
+  const new_msgs = msgs.slice(0, idx + 1).map((m) => ({
+    ...m,
+    id: nanoid(),
+    chat_id: new_id,
+  }));
+
+  rep.mutate.forkChat({
+    new_id,
+    title: chat.title ?? "Forked chat",
+    time: new Date().toISOString(),
+    msgs: new_msgs,
+  });
+};
+
 const AssistantMessageContent = memo(
-  ({ id, msg }: { id: string; msg: string }) => {
+  ({ id, chat_id, msg }: { id: string; chat_id: string; msg: string }) => {
+    const chat = useChatStore((state) =>
+      state.data.find((c) => c.id === chat_id)
+    );
+    const msgs = useMessageStore((state) => state.data);
+    const rep = useReplicache();
+
     if (id === "pending" && msg === "") {
       return (
         <p className="flex items-center">
-          <ArrowPathIcon className="mx-auto mr-2 h-4 w-4 animate-spin text-primary-500" />
+          <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin text-primary-500" />
           Thinking...
         </p>
       );
@@ -110,13 +153,28 @@ const AssistantMessageContent = memo(
         >
           {msg}
         </Markdown>
+        <div className="mt-10">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                variant="secondary"
+                onClick={() => forkChat(rep, id, chat as Chat, msgs)}
+                disabled={!chat}
+              >
+                <SplitIcon />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Fork chat</TooltipContent>
+          </Tooltip>
+        </div>
       </div>
     );
   }
 );
 
 export const MessageBubble = memo(
-  forwardRef<HTMLDivElement, Props>(({ id, role, msg }, ref) => {
+  forwardRef<HTMLDivElement, Props>(({ id, chat_id, role, msg }, ref) => {
     const isUser = role === "user";
 
     const bubbleContainerClasses = `flex flex-col max-w-3xl min-h-20 my-10 mx-auto ${
@@ -135,7 +193,7 @@ export const MessageBubble = memo(
           {isUser ? (
             <UserMessageContent msg={msg} />
           ) : (
-            <AssistantMessageContent id={id} msg={msg} />
+            <AssistantMessageContent id={id} chat_id={chat_id} msg={msg} />
           )}
         </div>
       </div>

@@ -29,7 +29,7 @@ pub trait Mutation {
 
 pub fn parse_mutation(raw: RawMutation) -> Result<Box<dyn Mutation>, serde_json::Error> {
     match raw.name.as_str() {
-        "createChat" | "updateChat" | "deleteChat" => {
+        "createChat" | "updateChat" | "deleteChat" | "forkChat" => {
             let chat_mutation: ChatMutation = serde_json::from_value(json!({
                 "name": raw.name,
                 "args": raw.args

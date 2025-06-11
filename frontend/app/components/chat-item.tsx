@@ -1,5 +1,5 @@
 import { href, Link } from "react-router";
-import { Loader2, Pin, PinOff, Trash2 } from "lucide-react";
+import { Loader2, Pin, PinOff, SplitIcon, Trash2 } from "lucide-react";
 import { SidebarMenuButton, SidebarMenuItem } from "~/components/ui/sidebar";
 import { Button } from "~/components/ui/button";
 import {
@@ -40,7 +40,10 @@ export function ChatItem({ item, isActive, onPin, onDelete }: ChatItemProps) {
         <TooltipTrigger asChild>
           <SidebarMenuButton isActive={isActive} asChild>
             <Link to={href("/chat/:thread_id", { thread_id: item.id })}>
-              <span className="truncate ">{item.title || "New chat"}</span>
+              <>
+                {item.forked && <SplitIcon />}
+                <span className="truncate ">{item.title || "New chat"}</span>
+              </>
             </Link>
           </SidebarMenuButton>
         </TooltipTrigger>

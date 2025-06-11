@@ -28,6 +28,7 @@ diesel::table! {
         title -> Nullable<Varchar>,
         archived -> Bool,
         pinned -> Bool,
+        forked -> Bool,
         version -> Integer,
         created_at -> Timestamp,
         updated_at -> Timestamp,
