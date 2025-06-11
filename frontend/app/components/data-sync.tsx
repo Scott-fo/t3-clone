@@ -4,8 +4,8 @@ import { useEffect } from "react";
 import type { Replicache } from "replicache";
 import type { ReplicacheType } from "~/contexts/ReplicacheContext";
 import type { User } from "~/domain/user";
-import { useAuth } from "~/contexts/AuthContext";
 import { useActiveModelStore } from "~/stores/active-model";
+import { useUserStore } from "~/stores/user";
 
 type SyncConfig = (rep: Replicache<ReplicacheType>, user: User) => () => void;
 
@@ -24,7 +24,7 @@ const syncConfigs: SyncConfig[] = [
 
 export const DataSync = () => {
   const rep = useReplicache();
-  const { user } = useAuth();
+  const user = useUserStore((state) => state.data);
 
   useEffect(() => {
     if (!rep || !user) return;

@@ -1,9 +1,12 @@
 import type { ReadTransaction, WriteTransaction } from "replicache";
 
+type Reasoning = "high" | "medium" | "low";
+
 export type ActiveModel = {
   readonly id: string;
   readonly provider: string;
   readonly model: string;
+  readonly reasoning: Reasoning | null;
   readonly created_at: string;
   readonly updated_at: string;
 };

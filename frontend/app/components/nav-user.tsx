@@ -1,3 +1,4 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   BadgeCheck,
   Bell,
@@ -6,6 +7,8 @@ import {
   LogOut,
   Sparkles,
 } from "lucide-react";
+import { useNavigate } from "react-router";
+import { dropAllDatabases } from "replicache";
 
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import {
@@ -23,6 +26,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "~/components/ui/sidebar";
+import { useReplicache } from "~/contexts/ReplicacheContext";
+import { api } from "~/lib/api";
+import { useUserStore } from "~/stores/user";
 
 export function NavUser({
   user,
@@ -32,6 +38,22 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const queryClient = useQueryClient();
+  const rep = useReplicache();
+  const navigate = useNavigate();
+
+  const clear = useUserStore((state) => state.clear);
+
+  const logoutMutation = useMutation({
+    mutationFn: () => api.post("/api/logout"),
+    onSuccess: () => {
+      queryClient.clear();
+      rep.close();
+      dropAllDatabases();
+      clear();
+      navigate("/login", { replace: true });
+    },
+  });
 
   return (
     <SidebarMenu>
@@ -94,7 +116,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => logoutMutation.mutate()}>
               <LogOut />
               Log out
             </DropdownMenuItem>

@@ -9,8 +9,7 @@ use secrecy::{ExposeSecret, SecretString};
 pub fn hash_password(password: &SecretString) -> Result<String> {
     let salt = SaltString::generate(&mut OsRng);
 
-    let params = argon2::Params::new(128 * 1024, 4, 1, Some(32))
-        .context("Failed to create Argon2 params")?;
+    let params = argon2::Params::default();
 
     let argon2 = Argon2::new(argon2::Algorithm::Argon2id, argon2::Version::V0x13, params);
 

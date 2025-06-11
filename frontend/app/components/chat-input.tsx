@@ -22,11 +22,11 @@ import { nanoid } from "nanoid";
 interface Props {
   handleSubmit: (text: string) => Promise<void>;
   disabled: boolean;
-  chatId: string;
 }
 
 // move this elsewhere and sync with server.
-// need to have an allowlist
+// do it with replicache, just add it to each cvr, then can have this synced
+// from server
 const modelList = [
   {
     provider: "openai",
@@ -153,6 +153,7 @@ function ChatInput({ disabled, handleSubmit }: Props) {
                       id: nanoid(),
                       model,
                       provider,
+                      reasoning: null,
                       created_at: new Date().toISOString(),
                       updated_at: new Date().toISOString(),
                     });

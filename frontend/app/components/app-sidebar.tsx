@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Command } from "lucide-react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { nanoid } from "nanoid";
 
 import { NavMain } from "~/components/nav-main";
@@ -16,12 +16,12 @@ import {
 } from "~/components/ui/sidebar";
 import { Button } from "./ui/button";
 import { useChatStore } from "~/stores/chat";
-import { useAuth } from "~/contexts/AuthContext";
+import { useUserStore } from "~/stores/user";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate();
   const chats = useChatStore((state) => state.data);
-  const { user } = useAuth();
+  const user = useUserStore((state) => state.data);
 
   const visibleChats = chats.filter((chat) => !chat.archived);
 
@@ -31,7 +31,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="#">
+              <Link to="/">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Command className="size-4" />
                 </div>
@@ -39,7 +39,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <span className="truncate font-medium">Acme Inc</span>
                   <span className="truncate text-xs">Enterprise</span>
                 </div>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

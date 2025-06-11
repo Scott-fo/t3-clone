@@ -180,6 +180,7 @@ fn build_next_cvr(
     Ok(CvrRecord::new(entities_map, last_mutation_ids))
 }
 
+// This only needs to select the id and the version.
 fn collect_all_entities(
     conn: &mut MysqlConnection,
     user_id: &str,

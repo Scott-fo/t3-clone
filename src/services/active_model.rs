@@ -39,11 +39,17 @@ impl ActiveModelService {
         args: CreateArgs,
         user_id: &str,
     ) -> Result<ActiveModel> {
+        let mut reasoning = None;
+        if let Some(r) = args.reasoning {
+            reasoning = Some(serde_json::to_string(&r)?);
+        }
+
         let active_model = ActiveModel {
             id: args.id,
             user_id: user_id.to_string(),
             provider: args.provider,
             model: args.model,
+            reasoning,
             version: 1,
             created_at: args.created_at.naive_utc(),
             updated_at: args.updated_at.naive_utc(),
@@ -68,9 +74,15 @@ impl ActiveModelService {
 
             self.check_ownership(conn, &args.id, user_id)?;
 
+            let mut reasoning = None;
+            if let Some(r) = args.reasoning {
+                reasoning = Some(serde_json::to_string(&r)?);
+            }
+
             let changeset = Changeset {
                 provider: args.provider,
                 model: args.model,
+                reasoning,
                 version: existing.version + 1,
                 updated_at: args.updated_at.naive_utc(),
             };

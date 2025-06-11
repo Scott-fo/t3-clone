@@ -1,63 +1,37 @@
 import ChatInput from "~/components/chat-input";
 import { useReplicache } from "~/contexts/ReplicacheContext";
-import { useSubscribe } from "replicache-react";
-import type { ReadTransaction } from "replicache";
-import { listMessagesForChat } from "~/domain/message";
-import { useCallback, useEffect, useRef } from "react";
-import { useAuth } from "~/contexts/AuthContext";
+import { useCallback } from "react";
 import { nanoid } from "nanoid";
-import { MessageBubble } from "~/components/message-bubble";
-import type { Route } from "./+types/chat";
+import { useUserStore } from "~/stores/user";
+import { useChatStream } from "~/contexts/ChatStreamContext";
+import { href, useNavigate } from "react-router";
 
-export default function Page({ params }: Route.ComponentProps) {
+export default function Page() {
   const rep = useReplicache();
-  const { user } = useAuth();
-
-  const messages = useSubscribe(
-    rep,
-    async (tx: ReadTransaction) => listMessagesForChat(tx, params.thread_id),
-    {
-      default: [],
-      dependencies: [params.thread_id],
-    }
-  );
-
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (messages.length === 0) return;
-    containerRef.current?.scrollTo({
-      top: containerRef.current.scrollHeight,
-      behavior: "smooth",
-    });
-  }, [messages]);
+  const user = useUserStore((state) => state.data);
+  const { startStream } = useChatStream();
+  const navigate = useNavigate();
 
   const onSendMessage = useCallback(
     async (msg: string) => {
       if (!user) return;
       const now = new Date().toISOString();
 
-      // if this is the first message in a new chat
-      if (messages.length === 0) {
-        rep.mutate.createChat({
-          id: params.thread_id,
-          user_id: user.id,
-          title: "test",
-          archived: false,
-          created_at: now,
-          updated_at: now,
-          version: 1,
-        });
-      } else {
-        rep.mutate.updateChat({
-          id: params.thread_id,
-          updated_at: now,
-        });
-      }
+      const new_chat_id = nanoid();
 
-      await rep.mutate.createMessage({
+      rep.mutate.createChat({
+        id: new_chat_id,
+        user_id: user.id,
+        title: "test",
+        archived: false,
+        created_at: now,
+        updated_at: now,
+        version: 1,
+      });
+
+      rep.mutate.createMessage({
         id: nanoid(),
-        chat_id: params.thread_id,
+        chat_id: new_chat_id,
         user_id: user.id,
         role: "user",
         body: msg,
@@ -65,27 +39,16 @@ export default function Page({ params }: Route.ComponentProps) {
         updated_at: now,
         version: 1,
       });
-      // startStream(params.threadId);
+
+      startStream(new_chat_id);
+      navigate(href("/chat/:thread_id", { thread_id: new_chat_id }));
     },
-    [messages.length, params.thread_id, rep, user?.id]
+    [rep, user?.id]
   );
 
   return (
     <div className="h-full max-h-screen h-screen w-full mx-auto flex flex-col overflow-hidden">
-      <div
-        ref={containerRef}
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-10 custom-scrollbar"
-      >
-        {messages.map((msg) => (
-          <MessageBubble
-            key={msg.id}
-            id={msg.id}
-            role={msg.role}
-            msg={msg.body}
-          />
-        ))}
-      </div>
-
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-10 custom-scrollbar"></div>
       <div className="w-full max-w-3xl mx-auto shrink-0 pt-2">
         <div className="relative">
           <div
@@ -100,11 +63,7 @@ export default function Page({ params }: Route.ComponentProps) {
             className="relative z-10 rounded-tl-xl rounded-tr-xl
                          p-2 bg-primary-foreground"
           >
-            <ChatInput
-              handleSubmit={onSendMessage}
-              chatId={params.thread_id}
-              disabled={false}
-            />
+            <ChatInput handleSubmit={onSendMessage} disabled={false} />
           </div>
         </div>
       </div>

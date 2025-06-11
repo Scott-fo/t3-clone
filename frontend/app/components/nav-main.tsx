@@ -1,5 +1,5 @@
 import { useLocation } from "react-router";
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import {
   SidebarGroup,
@@ -11,7 +11,7 @@ import type { Chat } from "~/domain/chat";
 import { ChatItem } from "./chat-item";
 import { useReplicache } from "~/contexts/ReplicacheContext";
 
-export function NavMain({ items }: { items: Chat[] }) {
+export const NavMain = memo(({ items }: { items: Chat[] }) => {
   const rep = useReplicache();
 
   const location = useLocation();
@@ -79,4 +79,4 @@ export function NavMain({ items }: { items: Chat[] }) {
       )}
     </div>
   );
-}
+});

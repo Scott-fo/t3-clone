@@ -1,5 +1,5 @@
 import { ClipboardDocumentIcon } from "@heroicons/react/24/outline";
-import { type FC, useState } from "react";
+import { type FC, memo, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/cjs/styles/prism";
 
@@ -8,7 +8,11 @@ interface Props {
   value: string;
 }
 
-export const CodeBlock: FC<Props> = ({ language, value }) => {
+const CustomPre = (props: any) => {
+  return <pre {...props} className="custom-scrollbar" />;
+};
+
+export const CodeBlock: FC<Props> = memo(({ language, value }) => {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = () => {
@@ -40,6 +44,7 @@ export const CodeBlock: FC<Props> = ({ language, value }) => {
       <SyntaxHighlighter
         language={language}
         style={oneLight}
+        PreTag={CustomPre}
         customStyle={{
           margin: 0,
           padding: "1rem",
@@ -56,4 +61,4 @@ export const CodeBlock: FC<Props> = ({ language, value }) => {
       </SyntaxHighlighter>
     </div>
   );
-};
+});

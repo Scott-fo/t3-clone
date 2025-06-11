@@ -2,7 +2,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::dtos;
+use crate::{ai::openai::Reasoning, dtos};
 
 use super::replicache::ReplicachePullModel;
 
@@ -13,6 +13,7 @@ pub struct ActiveModel {
     pub user_id: String,
     pub provider: String,
     pub model: String,
+    pub reasoning: Option<String>,
     pub version: i32,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -23,6 +24,7 @@ pub struct ActiveModel {
 pub struct Changeset {
     pub provider: String,
     pub model: String,
+    pub reasoning: Option<String>,
     pub version: i32,
     pub updated_at: NaiveDateTime,
 }
@@ -32,6 +34,7 @@ pub struct CreateArgs {
     pub id: String,
     pub provider: String,
     pub model: String,
+    pub reasoning: Option<Reasoning>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -41,6 +44,7 @@ pub struct UpdateArgs {
     pub id: String,
     pub provider: String,
     pub model: String,
+    pub reasoning: Option<Reasoning>,
     pub updated_at: DateTime<Utc>,
 }
 
@@ -69,6 +73,7 @@ impl From<ActiveModel> for dtos::active_model::ActiveModel {
             id: value.id,
             provider: value.provider,
             model: value.model,
+            reasoning: value.reasoning,
             created_at: value.created_at.and_utc(),
             updated_at: value.updated_at.and_utc(),
         }

@@ -8,10 +8,10 @@ import {
 } from "react";
 import { useReplicache } from "./ReplicacheContext";
 import { useSSE } from "./SSEContext";
-import { useAuth } from "./AuthContext";
 import type { Message } from "~/domain/message";
 import { useMessageStore } from "~/stores/message";
 import { nanoid } from "nanoid";
+import { useUserStore } from "~/stores/user";
 
 type StreamState = {
   pending: string;
@@ -40,7 +40,7 @@ interface Props {
 export const ChatStreamProvider: React.FC<Props> = ({ children }) => {
   const rep = useReplicache();
   const sse = useSSE();
-  const { user } = useAuth();
+  const user = useUserStore((state) => state.data);
 
   const [pendingResponses, setPendingResponses] = useState<
     Record<string, PendingResponse>

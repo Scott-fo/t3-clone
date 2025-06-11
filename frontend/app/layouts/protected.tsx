@@ -1,12 +1,14 @@
 import { Navigate, Outlet, useLocation } from "react-router";
 import { DataSync } from "~/components/data-sync";
-import { useAuth } from "~/contexts/AuthContext";
 import { ChatStreamProvider } from "~/contexts/ChatStreamContext";
 import { ReplicacheProvider } from "~/contexts/ReplicacheContext";
 import { SSEProvider } from "~/contexts/SSEContext";
+import { useUserStore } from "~/stores/user";
 
 const ProtectedRoute = () => {
-  const { user, loading } = useAuth();
+  const user = useUserStore((state) => state.data);
+  const loading = useUserStore((state) => state.loading);
+
   const location = useLocation();
 
   if (loading) return <div>Loading...</div>;

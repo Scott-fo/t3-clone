@@ -13,6 +13,8 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { api } from "~/lib/api";
+import { useUserStore } from "~/stores/user";
+import { LoaderIcon } from "lucide-react";
 
 export default function LoginForm({
   className,
@@ -24,11 +26,14 @@ export default function LoginForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>("");
 
+  const setUser = useUserStore((state) => state.setData);
+
   const mutation = useMutation({
     mutationFn: (data: { email: string; password: string }) =>
       api.post("/api/auth/login", data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["user"] });
+      setUser(res.data);
     },
     onError: (error: any) => {
       if (error.response && error.response.data) {
@@ -86,13 +91,20 @@ export default function LoginForm({
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={mutation.isPending}
-              >
-                Login
-              </Button>
+              {mutation.isPending ? (
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={mutation.isPending}
+                >
+                  <LoaderIcon className="animate-spin" />
+                  Logging in...
+                </Button>
+              ) : (
+                <Button type="submit" className="w-full">
+                  Login
+                </Button>
+              )}
               {error && <div className="text-sm text-red-600">{error}</div>}
             </div>
             <div className="mt-4 text-center text-sm">

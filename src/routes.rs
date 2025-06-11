@@ -44,8 +44,8 @@ pub fn app_routes(app_state: AppState) -> Router {
         .nest("/api", protected_routes(app_state.clone()))
         .nest("/api/auth", auth_routes())
         .fallback_service(
-            ServeDir::new("./frontend/dist")
-                .not_found_service(ServeFile::new("./frontend/dist/index.html")),
+            ServeDir::new("./frontend/build/client")
+                .not_found_service(ServeFile::new("./frontend/build/client/index.html")),
         )
         .layer(
             ServiceBuilder::new()

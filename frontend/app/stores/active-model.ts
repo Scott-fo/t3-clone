@@ -38,7 +38,7 @@ export const useActiveModelStore = create<State>((set, get) => ({
       console.log("Cleaning up active model subscription");
 
       unsubscribe();
-      set({ _unsubscribe: null });
+      set({ _unsubscribe: null, data: null });
     }
   },
 }));

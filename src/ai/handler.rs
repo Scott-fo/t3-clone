@@ -6,6 +6,7 @@ use tokio_retry2::{
 };
 
 use crate::{
+    ai::openai::Reasoning,
     app::AppState,
     models::message::{CreateArgs, Message},
 };
@@ -99,6 +100,7 @@ pub fn spawn_chat_task(state: AppState, user_id: String, args: CreateArgs) {
 
     let mut model = "gpt-4.1-mini".to_string();
     let mut provider = super::AiProvider::OpenAi;
+    let mut reasoning: Option<Reasoning> = None;
 
     if let Ok(Some(active)) = state
         .service_container
@@ -108,6 +110,8 @@ pub fn spawn_chat_task(state: AppState, user_id: String, args: CreateArgs) {
         if let Ok(p) = active.provider.parse() {
             provider = p;
         }
+
+        reasoning = active.reasoning.as_deref().and_then(|s| s.parse().ok());
 
         model = active.model;
     } else {
@@ -144,6 +148,7 @@ pub fn spawn_chat_task(state: AppState, user_id: String, args: CreateArgs) {
                     args.body,
                     model,
                     previous_response_id,
+                    reasoning,
                 )
                 .await
             }

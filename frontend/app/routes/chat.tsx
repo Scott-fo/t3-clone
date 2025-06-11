@@ -1,22 +1,31 @@
 import ChatInput from "~/components/chat-input";
 import { useReplicache } from "~/contexts/ReplicacheContext";
-import { useCallback, useEffect, useRef } from "react";
-import { useAuth } from "~/contexts/AuthContext";
+import {
+  memo,
+  startTransition,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { nanoid } from "nanoid";
 import { MessageBubble } from "~/components/message-bubble";
 import type { Route } from "./+types/chat";
 import { useChatStream } from "~/contexts/ChatStreamContext";
 import { useMessageStore } from "~/stores/message";
 import type { Message } from "~/domain/message";
+import { useUserStore } from "~/stores/user";
 
 export default function Page({ params }: Route.ComponentProps) {
   const rep = useReplicache();
-  const { user } = useAuth();
-
   const { startStream, pendingResponses } = useChatStream();
 
+  const user = useUserStore((state) => state.data);
   const messages = useMessageStore((state) => state.data);
   const { sync, cleanup, appendMessage } = useMessageStore.getState();
+
+  const [showMessages, setShowMessages] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const pendingRef = useRef<HTMLDivElement>(null);
@@ -24,17 +33,27 @@ export default function Page({ params }: Route.ComponentProps) {
 
   useEffect(() => {
     sync(rep, params.thread_id);
+
     return () => {
       cleanup();
     };
   }, [rep, params.thread_id, sync, cleanup]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    setShowMessages(false);
+    startTransition(() => setShowMessages(true));
+
     hasScrolledToBottomRef.current = false;
   }, [params.thread_id]);
 
   useEffect(() => {
-    if (messages.length === 0 || hasScrolledToBottomRef.current) return;
+    if (
+      !showMessages ||
+      messages.length === 0 ||
+      hasScrolledToBottomRef.current
+    ) {
+      return;
+    }
 
     containerRef.current?.scrollTo({
       top: containerRef.current.scrollHeight,
@@ -42,7 +61,7 @@ export default function Page({ params }: Route.ComponentProps) {
     });
 
     hasScrolledToBottomRef.current = true;
-  }, [messages]);
+  }, [showMessages, messages]);
 
   const isPending = pendingResponses[params.thread_id] !== undefined;
 
@@ -103,17 +122,13 @@ export default function Page({ params }: Route.ComponentProps) {
     <div className="h-full max-h-screen h-screen w-full mx-auto flex flex-col overflow-hidden">
       <div
         ref={containerRef}
+        style={{
+          contain: "layout paint",
+        }}
         className="flex-1 overflow-y-auto px-4 py-4 space-y-10 custom-scrollbar"
       >
-        {messages.map((msg) => (
-          <MessageBubble
-            key={msg.id}
-            id={msg.id}
-            role={msg.role}
-            msg={msg.body}
-          />
-        ))}
-        {pendingResponses[params.thread_id] !== undefined && (
+        {showMessages && <MessageList messages={messages} />}
+        {showMessages && pendingResponses[params.thread_id] !== undefined && (
           <MessageBubble
             ref={pendingRef}
             key="pending"
@@ -138,14 +153,16 @@ export default function Page({ params }: Route.ComponentProps) {
             className="relative z-10 rounded-tl-xl rounded-tr-xl
                          p-2 bg-primary-foreground"
           >
-            <ChatInput
-              handleSubmit={onSendMessage}
-              chatId={params.thread_id}
-              disabled={isPending}
-            />
+            <ChatInput handleSubmit={onSendMessage} disabled={isPending} />
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+const MessageList = memo(({ messages }: { messages: Message[] }) => {
+  return messages.map((msg) => (
+    <MessageBubble key={msg.id} id={msg.id} role={msg.role} msg={msg.body} />
+  ));
+});

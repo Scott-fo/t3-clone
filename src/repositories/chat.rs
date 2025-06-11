@@ -47,6 +47,7 @@ impl Repository<Chat, Changeset> for ChatRepository {
 
         chats
             .filter(user_id.eq(user_id_param))
+            .limit(100)
             .load(conn)
             .context(format!("Error finding chats for user {}", user_id_param))
     }

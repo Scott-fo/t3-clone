@@ -7,6 +7,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router";
 import { api } from "~/lib/api";
+import { useUserStore } from "~/stores/user";
+import { LoaderIcon } from "lucide-react";
 
 export default function SignupForm({
   className,
@@ -19,14 +21,17 @@ export default function SignupForm({
   const [password, setPassword] = useState("");
   const [password_confirmation, setPasswordConfirmation] = useState("");
 
+  const setUser = useUserStore((state) => state.setData);
+
   const mutation = useMutation({
     mutationFn: (data: {
       email: string;
       password: string;
       password_confirmation: string;
     }) => api.post("/api/auth/register", data),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["user"] });
+      setUser(res.data);
     },
     onError: (error: any) => {
       if (error.response && error.response.data) {
@@ -92,13 +97,20 @@ export default function SignupForm({
               {error !== "" && (
                 <span className="text-sm text-red-600">{error}</span>
               )}
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={mutation.isPending}
-              >
-                Sign Up
-              </Button>
+              {mutation.isPending ? (
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={mutation.isPending}
+                >
+                  <LoaderIcon className="animate-spin" />
+                  Registering...
+                </Button>
+              ) : (
+                <Button type="submit" className="w-full">
+                  Sign up
+                </Button>
+              )}
             </div>
             <div className="mt-4 text-center text-sm">
               Already have an account?{" "}

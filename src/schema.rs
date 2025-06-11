@@ -10,6 +10,8 @@ diesel::table! {
         provider -> Varchar,
         #[max_length = 255]
         model -> Varchar,
+        #[max_length = 255]
+        reasoning -> Nullable<Varchar>,
         version -> Integer,
         created_at -> Timestamp,
         updated_at -> Timestamp,

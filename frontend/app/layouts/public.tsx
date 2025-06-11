@@ -1,9 +1,10 @@
 import { Navigate, Outlet } from "react-router";
-import { useAuth } from "~/contexts/AuthContext";
 import { LoaderCircleIcon } from "lucide-react";
+import { useUserStore } from "~/stores/user";
 
 const PublicLayout = () => {
-  const { user, loading } = useAuth();
+  const user = useUserStore((state) => state.data);
+  const loading = useUserStore((state) => state.loading);
 
   if (loading) {
     return (

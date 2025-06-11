@@ -1,21 +1,135 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Error, Result, anyhow, bail};
 use futures_util::StreamExt;
 use reqwest::Client;
 use reqwest_eventsource::{Event, EventSource};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::{env, sync::Arc};
+use std::{env, str::FromStr, sync::Arc};
 use tracing::{info, warn};
 
-use crate::services::sse_manager::{SseManager, SseMessage};
+use crate::services::sse_manager::{EventType, SseManager, SseMessage};
 
-#[derive(Serialize)]
-struct OpenAIRequest {
-    model: String,
-    input: String,
-    stream: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    previous_response_id: Option<String>,
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum EffortLevel {
+    Low,
+    Medium,
+    High,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct Reasoning {
+    pub effort: EffortLevel,
+}
+
+impl FromStr for Reasoning {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "high" => Ok(Reasoning {
+                effort: EffortLevel::High,
+            }),
+            "low" => Ok(Reasoning {
+                effort: EffortLevel::Low,
+            }),
+            "medium" => Ok(Reasoning {
+                effort: EffortLevel::Medium,
+            }),
+            _ => bail!("Invalid reasoning level: '{}'", s),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(tag = "model")]
+pub enum OpenAIRequest {
+    #[serde(rename = "gpt-4.1")]
+    Gpt41 {
+        input: String,
+        stream: bool,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        previous_response_id: Option<String>,
+    },
+    #[serde(rename = "gpt-4.1-mini")]
+    Gpt41Mini {
+        input: String,
+        stream: bool,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        previous_response_id: Option<String>,
+    },
+    #[serde(rename = "gpt-4.1-nano")]
+    Gpt41Nano {
+        input: String,
+        stream: bool,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        previous_response_id: Option<String>,
+    },
+    #[serde(rename = "o4-mini")]
+    O4Mini {
+        input: String,
+        stream: bool,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        previous_response_id: Option<String>,
+        reasoning: Reasoning,
+    },
+    #[serde(rename = "o3")]
+    O3 {
+        input: String,
+        stream: bool,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        previous_response_id: Option<String>,
+        reasoning: Reasoning,
+    },
+}
+
+impl OpenAIRequest {
+    pub fn new_from_str(
+        model: &str,
+        input: String,
+        stream: bool,
+        previous_response_id: Option<String>,
+        reasoning: Option<Reasoning>,
+    ) -> Result<Self> {
+        match model {
+            "gpt-4.1" => Ok(Self::Gpt41 {
+                input,
+                stream,
+                previous_response_id,
+            }),
+            "gpt-4.1-mini" => Ok(Self::Gpt41Mini {
+                input,
+                stream,
+                previous_response_id,
+            }),
+            "gpt-4.1-nano" => Ok(Self::Gpt41Nano {
+                input,
+                stream,
+                previous_response_id,
+            }),
+            "o4-mini" => {
+                let reasoning =
+                    reasoning.ok_or_else(|| anyhow!("`o4-mini` requires a reasoning field"))?;
+                Ok(Self::O4Mini {
+                    input,
+                    stream,
+                    previous_response_id,
+                    reasoning,
+                })
+            }
+            "o3" => {
+                let reasoning =
+                    reasoning.ok_or_else(|| anyhow!("`o3` requires a reasoning field"))?;
+                Ok(Self::O3 {
+                    input,
+                    stream,
+                    previous_response_id,
+                    reasoning,
+                })
+            }
+            other => Err(anyhow!("unknown/unsupported model: {other}")),
+        }
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -66,6 +180,7 @@ pub async fn stream_openai_response(
     prompt: String,
     model: String,
     previous_response_id: Option<String>,
+    reasoning: Option<Reasoning>,
 ) -> Result<Option<(String, String)>> {
     process_stream(
         &sse_manager,
@@ -74,6 +189,7 @@ pub async fn stream_openai_response(
         &prompt,
         &model,
         previous_response_id,
+        reasoning,
     )
     .await
 }
@@ -85,16 +201,18 @@ async fn process_stream(
     prompt: &str,
     model: &str,
     previous_response_id: Option<String>,
+    reasoning: Option<Reasoning>,
 ) -> Result<Option<(String, String)>> {
     let api_key = env::var("OPENAI_API_KEY").context("OPENAI_API_KEY must be set")?;
     let client = Client::new();
 
-    let request_body = OpenAIRequest {
-        model: model.to_string(),
-        input: prompt.to_string(),
-        stream: true,
+    let request_body = OpenAIRequest::new_from_str(
+        model,
+        prompt.to_string(),
+        true,
         previous_response_id,
-    };
+        reasoning,
+    )?;
 
     let request = client
         .post("https://api.openai.com/v1/responses")
@@ -129,7 +247,7 @@ async fn process_stream(
                             .send_to_user(
                                 user_id,
                                 SseMessage {
-                                    event_type: "chat-stream-chunk".to_string(),
+                                    event_type: EventType::Chunk,
                                     data: Some(chunk_payload),
                                 },
                             )
@@ -158,7 +276,7 @@ async fn process_stream(
                             .send_to_user(
                                 user_id,
                                 SseMessage {
-                                    event_type: "chat-stream-done".to_string(),
+                                    event_type: EventType::Done,
                                     data: Some(done_payload),
                                 },
                             )
@@ -181,7 +299,7 @@ async fn process_stream(
                             .send_to_user(
                                 &user_id,
                                 SseMessage {
-                                    event_type: "chat-stream-error".to_string(),
+                                    event_type: EventType::Err,
                                     data: Some(error_payload),
                                 },
                             )
@@ -208,8 +326,6 @@ async fn process_stream(
 }
 
 pub async fn generate_title(first_message: &str) -> Result<String> {
-    const TITLE_MODEL: &str = "gpt-4.1-nano";
-
     let api_key = env::var("OPENAI_API_KEY").context("OPENAI_API_KEY must be set")?;
     let client = Client::new();
 
@@ -218,8 +334,7 @@ pub async fn generate_title(first_message: &str) -> Result<String> {
         first_message
     );
 
-    let request_body = OpenAIRequest {
-        model: TITLE_MODEL.to_string(),
+    let request_body = OpenAIRequest::Gpt41Nano {
         input: prompt,
         stream: false,
         previous_response_id: None,

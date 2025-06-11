@@ -38,7 +38,7 @@ export const useChatStore = create<State>((set, get) => ({
       console.log("Cleaning up chat subscription");
 
       unsubscribe();
-      set({ _unsubscribe: null });
+      set({ _unsubscribe: null, data: [] });
     }
   },
 }));
