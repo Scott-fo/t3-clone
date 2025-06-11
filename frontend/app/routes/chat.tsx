@@ -23,10 +23,9 @@ export default function Page({ params }: Route.ComponentProps) {
 
   const user = useUserStore((state) => state.data);
   const messages = useMessageStore((state) => state.data);
-  console.log({ messages });
-  const { sync, cleanup, appendMessage } = useMessageStore.getState();
-
   const [showMessages, setShowMessages] = useState(false);
+
+  const { sync, cleanup, appendMessage } = useMessageStore.getState();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const pendingRef = useRef<HTMLDivElement>(null);
@@ -64,7 +63,11 @@ export default function Page({ params }: Route.ComponentProps) {
     hasScrolledToBottomRef.current = true;
   }, [showMessages, messages]);
 
-  const isPending = pendingResponses[params.thread_id] !== undefined;
+  const isPending =
+    pendingResponses[params.thread_id] !== undefined ||
+    (messages &&
+      messages.length > 0 &&
+      messages[messages.length - 1].role === "user");
 
   useEffect(() => {
     if (isPending && pendingRef.current) {
@@ -130,14 +133,14 @@ export default function Page({ params }: Route.ComponentProps) {
         className="flex-1 overflow-y-auto px-4 py-4 space-y-10 custom-scrollbar"
       >
         {showMessages && <MessageList messages={messages} />}
-        {showMessages && pendingResponses[params.thread_id] !== undefined && (
+        {showMessages && isPending && (
           <MessageBubble
             chat_id={params.thread_id}
             ref={pendingRef}
             key="pending"
             id="pending"
             role="assistant"
-            msg={pendingResponses[params.thread_id].content}
+            msg={pendingResponses[params.thread_id]?.content ?? ""}
           />
         )}
       </div>
