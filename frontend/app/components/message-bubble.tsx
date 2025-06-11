@@ -1,12 +1,13 @@
 import {
   ArrowPathIcon,
   ArrowTopRightOnSquareIcon,
+  ClipboardDocumentIcon,
 } from "@heroicons/react/24/outline";
-import { forwardRef, memo } from "react";
+import { forwardRef, memo, useState } from "react";
 import Markdown from "react-markdown";
 import { CodeBlock } from "./code-block";
 import remarkGfm from "remark-gfm";
-import { SplitIcon } from "lucide-react";
+import { CheckIcon, SplitIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { useChatStore } from "~/stores/chat";
@@ -31,23 +32,65 @@ interface ContentProps {
   msg: string;
 }
 
+const CopyButton = ({
+  textToCopy,
+  variant = "secondary",
+  className,
+}: {
+  textToCopy: string;
+  variant?: "secondary" | "ghost";
+  className?: string;
+}) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(textToCopy);
+    setCopied(true);
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  };
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          size="icon"
+          variant={variant}
+          onClick={handleCopy}
+          className={className}
+        >
+          {copied ? (
+            <CheckIcon className="h-4 w-4 text-green-500" />
+          ) : (
+            <ClipboardDocumentIcon className="h-4 w-4" />
+          )}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{copied ? "Copied!" : "Copy message"}</TooltipContent>
+    </Tooltip>
+  );
+};
+
 const UserMessageContent = memo(({ msg }: ContentProps) => (
-  <Markdown
-    remarkPlugins={[remarkGfm]}
-    components={{
-      a: CitationLink,
-      code({ className, children }) {
-        return (
-          <CodeBlock
-            language="text"
-            value={String(children).replace(/\n$/, "")}
-          />
-        );
-      },
-    }}
-  >
-    {msg}
-  </Markdown>
+  <div>
+    <Markdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        a: CitationLink,
+        code({ className, children }) {
+          return (
+            <CodeBlock
+              language="text"
+              value={String(children).replace(/\n$/, "")}
+            />
+          );
+        },
+      }}
+    >
+      {msg}
+    </Markdown>
+  </div>
 ));
 
 const CitationLink = ({
@@ -154,7 +197,7 @@ const AssistantMessageContent = memo(
           {msg}
         </Markdown>
         {id !== "pending" && (
-          <div className="mt-10">
+          <div className="mt-10 flex items-center gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -168,6 +211,7 @@ const AssistantMessageContent = memo(
               </TooltipTrigger>
               <TooltipContent>Fork chat</TooltipContent>
             </Tooltip>
+            <CopyButton textToCopy={msg} />
           </div>
         )}
       </div>
@@ -198,6 +242,11 @@ export const MessageBubble = memo(
             <AssistantMessageContent id={id} chat_id={chat_id} msg={msg} />
           )}
         </div>
+        {isUser && (
+          <div className="mt-4 flex justify-end">
+            <CopyButton textToCopy={msg} variant="secondary" />
+          </div>
+        )}
       </div>
     );
   })
