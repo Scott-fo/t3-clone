@@ -153,21 +153,23 @@ const AssistantMessageContent = memo(
         >
           {msg}
         </Markdown>
-        <div className="mt-10">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon"
-                variant="secondary"
-                onClick={() => forkChat(rep, id, chat as Chat, msgs)}
-                disabled={!chat}
-              >
-                <SplitIcon />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Fork chat</TooltipContent>
-          </Tooltip>
-        </div>
+        {id !== "pending" && (
+          <div className="mt-10">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  onClick={() => forkChat(rep, id, chat as Chat, msgs)}
+                  disabled={!chat}
+                >
+                  <SplitIcon />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Fork chat</TooltipContent>
+            </Tooltip>
+          </div>
+        )}
       </div>
     );
   }
