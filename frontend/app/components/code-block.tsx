@@ -1,6 +1,11 @@
 import { ClipboardDocumentIcon } from "@heroicons/react/24/outline";
 import { Highlight, themes } from "prism-react-renderer";
 import { memo, useState } from "react";
+import { Button } from "./ui/button";
+import { CheckIcon, TextIcon, WrapTextIcon } from "lucide-react";
+import { cn } from "~/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { usePreferencesStore } from "~/stores/preferences";
 
 interface Props {
   language: string;
@@ -9,6 +14,8 @@ interface Props {
 
 export const CodeBlock = memo(({ language, value }: Props) => {
   const [copied, setCopied] = useState(false);
+  const prefs = usePreferencesStore((state) => state.data);
+  const setPrefs = usePreferencesStore((state) => state.setData);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(value);
@@ -23,25 +30,57 @@ export const CodeBlock = memo(({ language, value }: Props) => {
           {language || "text"}
         </span>
 
-        <button
-          onClick={handleCopy}
-          className="flex items-center gap-1.5 text-xs text-primary-foreground hover:font-semibold"
-        >
-          {copied ? (
-            "Copied!"
-          ) : (
-            <>
-              <ClipboardDocumentIcon className="h-4 w-4" />
-              Copy&nbsp;code
-            </>
-          )}
-        </button>
+        <div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={() =>
+                  setPrefs({ ...prefs, wrapText: !prefs.wrapText })
+                }
+                variant="ghost"
+                size="icon"
+                className="size-7 text-primary-foreground"
+              >
+                {prefs.wrapText ? (
+                  <TextIcon className="h-4 w-4" />
+                ) : (
+                  <WrapTextIcon className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {prefs.wrapText
+                ? "Disable text wrapping"
+                : "Enable text wrapping"}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={handleCopy}
+                variant="ghost"
+                size="icon"
+                className="size-7 text-primary-foreground"
+              >
+                {copied ? (
+                  <CheckIcon className="h-4 w-4" />
+                ) : (
+                  <ClipboardDocumentIcon className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Copy</TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
       <Highlight theme={themes.vsLight} code={value} language={language as any}>
         {({ className, style, tokens, getLineProps, getTokenProps }) => (
           <pre
-            className={`custom-scrollbar overflow-auto m-0 rounded-b-lg p-4 ${className}`}
+            className={cn(
+              `custom-scrollbar overflow-auto m-0 rounded-b-lg p-4 ${className}`,
+              prefs.wrapText && "text-wrap"
+            )}
             style={{
               ...style,
               margin: 0,
