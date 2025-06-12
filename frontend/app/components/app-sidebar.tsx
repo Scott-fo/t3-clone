@@ -76,7 +76,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
 
       switch (event.key) {
-        case "c": {
+        case "s": {
           event.preventDefault();
           navigate(href("/chat/:thread_id", { thread_id: nanoid() }));
           break;
@@ -88,7 +88,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           }
           break;
         }
-        case "s": {
+        case "k": {
           event.preventDefault();
           setCommandOpen((prev) => !prev);
           break;

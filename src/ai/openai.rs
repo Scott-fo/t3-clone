@@ -14,6 +14,13 @@ use super::reasoning::{EffortLevel, Reasoning};
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "model")]
 pub enum OpenAIRequest {
+    #[serde(rename = "gpt-4o")]
+    Gpt4o {
+        input: String,
+        stream: bool,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        previous_response_id: Option<String>,
+    },
     #[serde(rename = "gpt-4.1")]
     Gpt41 {
         input: String,
@@ -34,6 +41,14 @@ pub enum OpenAIRequest {
         stream: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
         previous_response_id: Option<String>,
+    },
+    #[serde(rename = "o3-mini")]
+    O3Mini {
+        input: String,
+        stream: bool,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        previous_response_id: Option<String>,
+        reasoning: Reasoning,
     },
     #[serde(rename = "o4-mini")]
     O4Mini {
@@ -62,6 +77,11 @@ impl OpenAIRequest {
         effort: Option<EffortLevel>,
     ) -> Result<Self> {
         match model {
+            "gpt-4o" => Ok(Self::Gpt4o {
+                input,
+                stream,
+                previous_response_id,
+            }),
             "gpt-4.1" => Ok(Self::Gpt41 {
                 input,
                 stream,
@@ -81,6 +101,16 @@ impl OpenAIRequest {
                 let effort =
                     effort.ok_or_else(|| anyhow!("`o4-mini` requires a reasoning field"))?;
                 Ok(Self::O4Mini {
+                    input,
+                    stream,
+                    previous_response_id,
+                    reasoning: Reasoning::new(effort),
+                })
+            }
+            "o3-mini" => {
+                let effort =
+                    effort.ok_or_else(|| anyhow!("`o3-mini` requires a reasoning field"))?;
+                Ok(Self::O3Mini {
                     input,
                     stream,
                     previous_response_id,

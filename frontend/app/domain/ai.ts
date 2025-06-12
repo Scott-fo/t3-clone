@@ -30,6 +30,11 @@ export const supportedModels: SupportedModels[] = [
         reasoning: true,
       },
       {
+        model: "o3-mini",
+        display: "o3 mini",
+        reasoning: true,
+      },
+      {
         model: "gpt-4.1",
         display: "GPT 4.1",
       },
@@ -40,6 +45,10 @@ export const supportedModels: SupportedModels[] = [
       {
         model: "gpt-4.1-nano",
         display: "GPT 4.1 nano",
+      },
+      {
+        model: "gpt-4o",
+        display: "GPT 4o",
       },
     ],
   },
