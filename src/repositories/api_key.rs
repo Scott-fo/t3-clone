@@ -24,6 +24,17 @@ impl ApiKeyRepository {
             .load::<ApiKey>(conn)?)
     }
 
+    pub fn get_for_provider(
+        conn: &mut MysqlConnection,
+        user_id: &str,
+        provider: &str,
+    ) -> Result<ApiKey> {
+        Ok(api_keys::table
+            .filter(api_keys::user_id.eq(user_id))
+            .filter(api_keys::provider.eq(provider))
+            .first::<ApiKey>(conn)?)
+    }
+
     pub fn delete(conn: &mut MysqlConnection, id: u64, user_id: &str) -> Result<usize> {
         Ok(diesel::delete(
             api_keys::table

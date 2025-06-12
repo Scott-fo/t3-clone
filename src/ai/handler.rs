@@ -11,6 +11,8 @@ use crate::{
     models::message::{CreateArgs, Message},
 };
 
+// MAJOR REFACTOR NEEDED
+
 pub fn spawn_title_generation_task(
     state: AppState,
     chat_id: String,
@@ -50,14 +52,20 @@ async fn generate_and_save_title(
     message_body: &str,
     user_id: &str,
 ) -> Result<()> {
-    let title = super::openai::generate_title(&message_body)
-        .await
-        .context("OpenAI title generation failed")?;
-
     let mut conn = state
         .db_pool
         .get()
         .context("Failed to get DB connection from pool")?;
+
+    let api_key = state
+        .service_container
+        .api_key_service
+        .get_for_provider(&mut conn, &user_id, &super::AiProvider::OpenAi.to_string())
+        .and_then(|key| state.service_container.api_key_service.decrypt(key))?;
+
+    let title = super::openai::generate_title(&api_key, &message_body)
+        .await
+        .context("OpenAI title generation failed")?;
 
     let _chat_to_update = state
         .service_container
@@ -139,10 +147,47 @@ pub fn spawn_chat_task(state: AppState, user_id: String, args: CreateArgs) {
         .find(|m| m.role == "assistant")
         .map(|m| m.id.clone());
 
+    let api_key = match state
+        .service_container
+        .api_key_service
+        .get_for_provider(&mut conn, &user_id, &provider.to_string())
+        .and_then(|key| state.service_container.api_key_service.decrypt(key))
+    {
+        Ok(k) => k,
+        Err(_) => {
+            tracing::error!(%user_id, "API key missing for provider");
+            let ca = CreateArgs {
+                id: uuid::Uuid::new_v4().to_string(),
+                chat_id: args.chat_id,
+                role: "assistant".to_string(),
+                body: format!("Error: Missing API key for {}", provider.to_string()),
+                reasoning: None,
+                created_at: Utc::now(),
+                updated_at: Utc::now(),
+            };
+
+            if let Err(e) = state
+                .service_container
+                .message_service
+                .create(&mut conn, ca, &user_id)
+            {
+                tracing::error!(error = %e, "Failed to save assistant message to DB.");
+            }
+
+            {
+                let sse_manager = sse_manager.clone();
+                let user_id = user_id.clone();
+                tokio::spawn(async move { sse_manager.replicache_poke(&user_id).await });
+            }
+            return;
+        }
+    };
+
     tokio::spawn(async move {
         let result = match provider {
             super::AiProvider::OpenAi => {
                 super::openai::stream_openai_response(
+                    api_key,
                     sse_manager,
                     user_id.clone(),
                     args.chat_id.clone(),

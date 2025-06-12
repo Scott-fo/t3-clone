@@ -2,14 +2,17 @@ use anyhow::{Context, Result, anyhow};
 use futures_util::StreamExt;
 use reqwest::Client;
 use reqwest_eventsource::{Event, EventSource};
+use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::{env, sync::Arc};
+use std::sync::Arc;
 use tracing::{info, warn};
 
 use crate::services::sse_manager::{EventType, SseManager, SseMessage};
 
 use super::reasoning::{EffortLevel, Reasoning};
+
+// MAJOR REFACTOR NEEDED
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "model")]
@@ -213,6 +216,7 @@ pub struct StreamResult {
 }
 
 pub async fn stream_openai_response(
+    api_key: SecretString,
     sse_manager: Arc<SseManager>,
     user_id: String,
     chat_id: String,
@@ -222,6 +226,7 @@ pub async fn stream_openai_response(
     reasoning: Option<EffortLevel>,
 ) -> Result<Option<StreamResult>> {
     process_stream(
+        &api_key,
         &sse_manager,
         &user_id,
         &chat_id,
@@ -234,6 +239,7 @@ pub async fn stream_openai_response(
 }
 
 async fn process_stream(
+    api_key: &SecretString,
     sse_manager: &SseManager,
     user_id: &str,
     chat_id: &str,
@@ -242,7 +248,6 @@ async fn process_stream(
     previous_response_id: Option<String>,
     effort: Option<EffortLevel>,
 ) -> Result<Option<StreamResult>> {
-    let api_key = env::var("OPENAI_API_KEY").context("OPENAI_API_KEY must be set")?;
     let client = Client::new();
 
     let instructions = "All code that you generate MUST be generated so that it is correctly rendered inside of a <code> block. Keep decoration in text to a minimum, just respond with clear information, in markdown format. RemarkGFM is used to help parse your output.";
@@ -258,7 +263,7 @@ async fn process_stream(
 
     let request = client
         .post("https://api.openai.com/v1/responses")
-        .bearer_auth(api_key)
+        .bearer_auth(api_key.expose_secret())
         .json(&request_body);
 
     let mut es = EventSource::new(request).context("Failed to create event source")?;
@@ -432,13 +437,10 @@ async fn process_stream(
     Ok(None)
 }
 
-pub async fn generate_title(first_message: &str) -> Result<String> {
-    let api_key = env::var("OPENAI_API_KEY").context("OPENAI_API_KEY must be set")?;
-    let client = Client::new();
-
+pub async fn generate_title(api_key: &SecretString, first_message: &str) -> Result<String> {
     let prompt = format!(
         "Summarize the following message into a short, concise title of 5 words or less, without quotation marks: \"{}\"",
-        first_message
+        &first_message,
     );
 
     let request_body = OpenAIRequest::Gpt41Nano {
@@ -448,9 +450,11 @@ pub async fn generate_title(first_message: &str) -> Result<String> {
         instructions: None,
     };
 
+    let client = Client::new();
+
     let response = client
         .post("https://api.openai.com/v1/responses")
-        .bearer_auth(api_key)
+        .bearer_auth(api_key.expose_secret())
         .json(&request_body)
         .send()
         .await

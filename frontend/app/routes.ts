@@ -10,6 +10,7 @@ export default [
     layout("layouts/app.tsx", [
       index("routes/home.tsx"),
       route("chat/:thread_id", "routes/chat.tsx"),
+      route("settings", "routes/settings.tsx"),
     ]),
   ]),
 

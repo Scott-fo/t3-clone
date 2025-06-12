@@ -1,6 +1,6 @@
 use chrono::{NaiveDateTime, Utc};
 use diesel::prelude::*;
-use secrecy::{ExposeSecret, SecretString};
+use secrecy::{ExposeSecret, SecretSlice, SecretString};
 use serde::{Deserialize, Serialize};
 
 use aes_gcm::{Aes256Gcm, KeyInit, Nonce, aead::Aead};
@@ -42,8 +42,11 @@ pub struct CreateArgs {
 }
 
 impl ApiKey {
-    pub fn encrypt_plain_text(plain: &SecretString, master_key: &SecretString) -> Result<Vec<u8>> {
-        let cipher = Aes256Gcm::new(master_key.expose_secret().as_bytes().into());
+    pub fn encrypt_plain_text(
+        plain: &SecretString,
+        master_key: SecretSlice<u8>,
+    ) -> Result<Vec<u8>> {
+        let cipher = Aes256Gcm::new(master_key.expose_secret().into());
 
         let mut nonce_bytes = [0u8; NONCE_LEN];
         rand::rng().fill_bytes(&mut nonce_bytes);
@@ -58,13 +61,13 @@ impl ApiKey {
         Ok(out)
     }
 
-    pub fn decrypt(&self, master_key: &SecretString) -> Result<SecretString> {
+    pub fn decrypt(&self, master_key: &SecretSlice<u8>) -> Result<SecretString> {
         if self.encrypted_key.len() <= NONCE_LEN {
             return Err(anyhow!("ciphertext too short"));
         }
 
         let (nonce_bytes, ct) = self.encrypted_key.split_at(NONCE_LEN);
-        let cipher = Aes256Gcm::new(master_key.expose_secret().as_bytes().into());
+        let cipher = Aes256Gcm::new(master_key.expose_secret().into());
         let plain = cipher
             .decrypt(Nonce::from_slice(nonce_bytes), ct)
             .map_err(|_| anyhow::anyhow!("Failed to decrypt api key"))?;
@@ -77,12 +80,12 @@ impl ApiKey {
     pub fn build_new(
         user_id: String,
         args: CreateArgs,
-        master_key: SecretString,
+        master_key: SecretSlice<u8>,
     ) -> Result<NewApiKey> {
         Ok(NewApiKey {
             user_id,
             provider: args.provider,
-            encrypted_key: Self::encrypt_plain_text(&args.api_key, &master_key)?,
+            encrypted_key: Self::encrypt_plain_text(&args.api_key, master_key)?,
             version: 1,
             created_at: Utc::now().naive_utc(),
             updated_at: Utc::now().naive_utc(),

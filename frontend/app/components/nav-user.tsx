@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronsUpDown, LogOut, Settings } from "lucide-react";
-import { useNavigate } from "react-router";
+import { href, useNavigate } from "react-router";
 import { dropAllDatabases } from "replicache";
 
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
@@ -74,7 +74,7 @@ export function NavUser({
             sideOffset={4}
           >
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate(href("/settings"))}>
                 <Settings />
                 Settings
               </DropdownMenuItem>

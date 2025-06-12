@@ -36,3 +36,6 @@ reqwest-eventsource = "0.6.0"
 tokio-retry2 = { version = "0.5.7", features = ["jitter", "tracing"] }
 aes-gcm = "0.10.3"
 rand = "0.9.1"
+base64 = "0.22.1"
+hkdf = "0.12.4"
+sha2 = "0.10.9"
