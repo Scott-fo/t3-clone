@@ -138,14 +138,25 @@ export const ChatStreamProvider: React.FC<Props> = ({ children }) => {
       });
     };
 
+    const handleStreamExit = (r: Response) => {
+      const { chat_id: chatId } = r.data;
+
+      setPendingResponses((prevStreams) => {
+        const { [chatId]: _, ...rest } = prevStreams;
+        return rest;
+      });
+    };
+
     sse.addEventListener("chat-stream-chunk", handleStreamChunk);
     sse.addEventListener("chat-stream-done", handleStreamDone);
     sse.addEventListener("chat-stream-error", handleStreamError);
+    sse.addEventListener("chat-stream-exit", handleStreamExit);
 
     return () => {
       sse.removeEventListener("chat-stream-chunk", handleStreamChunk);
       sse.removeEventListener("chat-stream-done", handleStreamDone);
       sse.removeEventListener("chat-stream-error", handleStreamError);
+      sse.removeEventListener("chat-stream-exit", handleStreamExit);
     };
   }, [sse, rep, user]);
 

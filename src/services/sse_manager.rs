@@ -83,6 +83,7 @@ impl UserStream {
     }
 }
 
+// make this tagged
 #[derive(Debug, Serialize, Clone)]
 pub enum EventType {
     #[serde(rename = "chat-stream-chunk")]
@@ -91,6 +92,8 @@ pub enum EventType {
     Done,
     #[serde(rename = "chat-stream-error")]
     Err,
+    #[serde(rename = "chat-stream-exit")]
+    Exit,
     #[serde(rename = "replicache-poke")]
     Replicache,
 }

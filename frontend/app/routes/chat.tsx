@@ -121,7 +121,7 @@ export default function Page({ params }: Route.ComponentProps) {
       } as Message;
 
       appendMessage(usr_msg);
-      rep.mutate.createMessage(usr_msg);
+      await rep.mutate.createMessage(usr_msg);
 
       startStream(params.thread_id);
     },

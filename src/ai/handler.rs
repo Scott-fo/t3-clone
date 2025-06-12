@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
-use chrono::Utc;
+use chrono::{Duration, Utc};
+use serde_json::json;
 use tokio_retry2::{
     Retry, RetryError,
     strategy::{ExponentialBackoff, jitter},
@@ -9,6 +10,7 @@ use crate::{
     ai::reasoning::EffortLevel,
     app::AppState,
     models::message::{CreateArgs, Message},
+    services::sse_manager::{EventType, SseMessage},
 };
 
 // MAJOR REFACTOR NEEDED
@@ -156,14 +158,23 @@ pub fn spawn_chat_task(state: AppState, user_id: String, args: CreateArgs) {
         Ok(k) => k,
         Err(_) => {
             tracing::error!(%user_id, "API key missing for provider");
+
+            // to sort ordering issue in dev.
+            let now = Utc::now();
+            let safe_created = if now.timestamp() == args.created_at.timestamp() {
+                args.created_at + Duration::seconds(1)
+            } else {
+                now
+            };
+
             let ca = CreateArgs {
                 id: uuid::Uuid::new_v4().to_string(),
-                chat_id: args.chat_id,
+                chat_id: args.chat_id.clone(),
                 role: "assistant".to_string(),
                 body: format!("Error: Missing API key for {}", provider.to_string()),
                 reasoning: None,
-                created_at: Utc::now(),
-                updated_at: Utc::now(),
+                created_at: safe_created,
+                updated_at: safe_created,
             };
 
             if let Err(e) = state
@@ -177,7 +188,22 @@ pub fn spawn_chat_task(state: AppState, user_id: String, args: CreateArgs) {
             {
                 let sse_manager = sse_manager.clone();
                 let user_id = user_id.clone();
-                tokio::spawn(async move { sse_manager.replicache_poke(&user_id).await });
+                tokio::spawn(async move {
+                    let exit_payload = json!({
+                        "chat_id": args.chat_id,
+                    });
+
+                    sse_manager
+                        .send_to_user(
+                            &user_id,
+                            SseMessage {
+                                event_type: EventType::Exit,
+                                data: Some(exit_payload),
+                            },
+                        )
+                        .await;
+                    sse_manager.replicache_poke(&user_id).await;
+                });
             }
             return;
         }

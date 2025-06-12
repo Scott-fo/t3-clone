@@ -22,7 +22,7 @@ export default function Page() {
 
       const new_chat_id = nanoid();
 
-      rep.mutate.createChat({
+      await rep.mutate.createChat({
         id: new_chat_id,
         title: "test",
         forked: false,
@@ -31,7 +31,7 @@ export default function Page() {
         updated_at: now,
       });
 
-      rep.mutate.createMessage({
+      await rep.mutate.createMessage({
         id: nanoid(),
         chat_id: new_chat_id,
         role: "user",
