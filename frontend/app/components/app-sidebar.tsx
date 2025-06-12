@@ -1,7 +1,9 @@
 import * as React from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Command } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { nanoid } from "nanoid";
+import { href } from "react-router";
 
 import { NavMain } from "~/components/nav-main";
 import { NavUser } from "~/components/nav-user";
@@ -17,13 +19,101 @@ import {
 import { Button } from "./ui/button";
 import { useChatStore } from "~/stores/chat";
 import { useUserStore } from "~/stores/user";
+import { useReplicache } from "~/contexts/ReplicacheContext";
+
+export const MAX_PINNED_CHATS = 5;
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate();
-  const chats = useChatStore((state) => state.data);
+  const rep = useReplicache();
+
+  const allChats = useChatStore((state) => state.data);
   const user = useUserStore((state) => state.data);
 
-  const visibleChats = chats.filter((chat) => !chat.archived);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const visibleChats = useMemo(
+    () => allChats.filter((chat) => !chat.archived),
+    [allChats]
+  );
+
+  const filteredChats = useMemo(() => {
+    if (!searchQuery) return visibleChats;
+    return visibleChats.filter((item) =>
+      (item.title || "New chat")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+    );
+  }, [visibleChats, searchQuery]);
+
+  const pinnedChats = useMemo(
+    () =>
+      filteredChats
+        .filter((item) => item.pinned)
+        .sort(
+          (a, b) =>
+            new Date(a.pinned_at!).getTime() - new Date(b.pinned_at!).getTime()
+        ),
+    [filteredChats]
+  );
+
+  const historyChats = useMemo(
+    () => filteredChats.filter((item) => !item.pinned),
+    [filteredChats]
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!event.metaKey && !event.ctrlKey) {
+        return;
+      }
+
+      switch (event.key) {
+        case "c": {
+          event.preventDefault();
+          navigate(href("/chat/:thread_id", { thread_id: nanoid() }));
+          break;
+        }
+        case "1":
+        case "2":
+        case "3":
+        case "4":
+        case "5": {
+          event.preventDefault();
+          const keyNumber = parseInt(event.key, 10);
+          const chatToNavigate = pinnedChats[keyNumber - 1];
+          if (chatToNavigate) {
+            navigate(`/chat/${chatToNavigate.id}`);
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [pinnedChats, navigate]);
+
+  const handlePinChat = (id: string, pinned: boolean) => {
+    if (pinned && pinnedChats.length >= MAX_PINNED_CHATS) {
+      // add toast here with sonner
+      return;
+    }
+    rep.mutate.updateChat({
+      id,
+      pinned,
+      updated_at: new Date().toISOString(),
+      pinned_at: new Date().toISOString(),
+    });
+  };
+
+  const handleDeleteChat = (id: string) => {
+    rep.mutate.deleteChat({ id });
+  };
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -48,7 +138,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <Button size="lg" onClick={() => navigate(`/chat/${nanoid()}`)}>
           New Chat
         </Button>
-        <NavMain items={visibleChats} />
+        <NavMain
+          pinnedChats={pinnedChats}
+          historyChats={historyChats}
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          onPinChat={handlePinChat}
+          onDeleteChat={handleDeleteChat}
+        />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user!} />
