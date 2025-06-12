@@ -1,5 +1,10 @@
-use crate::repositories::{
-    active_model::ActiveModelRepository, chat::ChatRepository, message::MessageRepository,
+use std::sync::Arc;
+
+use crate::{
+    configuration::Settings,
+    repositories::{
+        active_model::ActiveModelRepository, chat::ChatRepository, message::MessageRepository,
+    },
 };
 
 use super::{
@@ -16,12 +21,12 @@ pub struct ServiceContainer {
 }
 
 impl ServiceContainer {
-    pub fn new() -> Self {
+    pub fn new(config: Arc<Settings>) -> Self {
         Self {
             chat_service: ChatService::new(ChatRepository, MessageRepository),
             message_service: MessageService::new(MessageRepository, ChatRepository),
             active_model_service: ActiveModelService::new(ActiveModelRepository),
-            api_key_service: ApiKeyService::new(),
+            api_key_service: ApiKeyService::new(config.application.secret.clone()),
         }
     }
 }

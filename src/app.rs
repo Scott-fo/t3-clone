@@ -67,7 +67,7 @@ async fn create(
 ) -> Result<(tokio::net::TcpListener, Router), anyhow::Error> {
     let config = Arc::new(config);
     let base_url = Arc::new(ApplicationBaseUrl(config.application.base_url.clone()));
-    let service_container = Arc::new(ServiceContainer::new());
+    let service_container = Arc::new(ServiceContainer::new(config.clone()));
     let sse_manager = Arc::new(SseManager::new());
 
     let app_state = AppState {

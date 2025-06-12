@@ -1,19 +1,19 @@
 use anyhow::{Context, Result};
 use diesel::prelude::*;
+use secrecy::SecretString;
 
 use crate::{
-    models::api_key::{ApiKey, CreateArgs, NewApiKey},
+    models::api_key::{ApiKey, CreateArgs},
     repositories::api_key::ApiKeyRepository,
 };
 
-// change this type. we're getting it from our config secret so it is a secret string
 #[derive(Debug, Clone)]
 pub struct ApiKeyService {
-    master_key: [u8; 32],
+    master_key: SecretString,
 }
 
 impl ApiKeyService {
-    pub fn new(master_key: [u8; 32]) -> Self {
+    pub fn new(master_key: SecretString) -> Self {
         Self { master_key }
     }
 
@@ -23,8 +23,8 @@ impl ApiKeyService {
         user_id: &str,
         args: CreateArgs,
     ) -> Result<ApiKey> {
-        let new_api_key =
-            ApiKey::build_new(user_id.to_owned(), args, &self.master_key).context("encrypt")?;
+        let new_api_key = ApiKey::build_new(user_id.to_owned(), args, self.master_key.clone())
+            .context("encrypt")?;
         ApiKeyRepository::create(conn, &new_api_key)
     }
 

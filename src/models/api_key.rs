@@ -7,6 +7,8 @@ use aes_gcm::{Aes256Gcm, KeyInit, Nonce, aead::Aead};
 use anyhow::{Result, anyhow};
 use rand::RngCore;
 
+use crate::dtos;
+
 const NONCE_LEN: usize = 12;
 
 #[derive(Queryable, Identifiable, Clone, Serialize, Deserialize)]
@@ -40,8 +42,8 @@ pub struct CreateArgs {
 }
 
 impl ApiKey {
-    pub fn encrypt_plain_text(plain: &SecretString, master_key: &[u8; 32]) -> Result<Vec<u8>> {
-        let cipher = Aes256Gcm::new(master_key.into());
+    pub fn encrypt_plain_text(plain: &SecretString, master_key: &SecretString) -> Result<Vec<u8>> {
+        let cipher = Aes256Gcm::new(master_key.expose_secret().as_bytes().into());
 
         let mut nonce_bytes = [0u8; NONCE_LEN];
         rand::rng().fill_bytes(&mut nonce_bytes);
@@ -56,13 +58,13 @@ impl ApiKey {
         Ok(out)
     }
 
-    pub fn decrypt(&self, master_key: &[u8; 32]) -> Result<SecretString> {
+    pub fn decrypt(&self, master_key: &SecretString) -> Result<SecretString> {
         if self.encrypted_key.len() <= NONCE_LEN {
             return Err(anyhow!("ciphertext too short"));
         }
 
         let (nonce_bytes, ct) = self.encrypted_key.split_at(NONCE_LEN);
-        let cipher = Aes256Gcm::new(master_key.into());
+        let cipher = Aes256Gcm::new(master_key.expose_secret().as_bytes().into());
         let plain = cipher
             .decrypt(Nonce::from_slice(nonce_bytes), ct)
             .map_err(|_| anyhow::anyhow!("Failed to decrypt api key"))?;
@@ -75,15 +77,26 @@ impl ApiKey {
     pub fn build_new(
         user_id: String,
         args: CreateArgs,
-        master_key: &[u8; 32],
+        master_key: SecretString,
     ) -> Result<NewApiKey> {
         Ok(NewApiKey {
             user_id,
             provider: args.provider,
-            encrypted_key: Self::encrypt_plain_text(&args.api_key, master_key)?,
+            encrypted_key: Self::encrypt_plain_text(&args.api_key, &master_key)?,
             version: 1,
             created_at: Utc::now().naive_utc(),
             updated_at: Utc::now().naive_utc(),
         })
+    }
+}
+
+impl From<ApiKey> for dtos::api_key::ApiKey {
+    fn from(value: ApiKey) -> Self {
+        Self {
+            id: value.id,
+            provider: value.provider,
+            created_at: value.created_at.and_utc(),
+            updated_at: value.updated_at.and_utc(),
+        }
     }
 }

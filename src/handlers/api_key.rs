@@ -5,39 +5,15 @@ use axum::{
     http::StatusCode,
 };
 use secrecy::SecretString;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-use crate::{
-    app::AppState,
-    dtos,
-    models::api_key::{ApiKey, CreateArgs},
-};
+use crate::{app::AppState, dtos, models::api_key::CreateArgs};
 
 #[derive(Debug, Deserialize)]
 pub struct ApiKeyCreateRequest {
     pub provider: String,
     #[serde(rename = "key")]
     pub api_key: SecretString,
-}
-
-#[derive(Debug, Serialize)]
-pub struct ApiKeyResponse {
-    pub id: u64,
-    pub provider: String,
-    pub created_at: String,
-    pub updated_at: String,
-}
-
-// use a dto instead
-impl From<ApiKey> for ApiKeyResponse {
-    fn from(k: ApiKey) -> Self {
-        Self {
-            id: k.id,
-            provider: k.provider,
-            created_at: k.created_at.to_string(),
-            updated_at: k.updated_at.to_string(),
-        }
-    }
 }
 
 #[tracing::instrument(
@@ -48,7 +24,7 @@ pub async fn create_api_key(
     State(state): State<AppState>,
     Extension(user): Extension<dtos::user::User>,
     Json(payload): Json<ApiKeyCreateRequest>,
-) -> Result<(StatusCode, Json<ApiKeyResponse>), (StatusCode, String)> {
+) -> Result<(StatusCode, Json<dtos::api_key::ApiKey>), (StatusCode, String)> {
     let mut conn = state
         .db_pool
         .get()
@@ -73,7 +49,7 @@ pub async fn create_api_key(
 pub async fn list_api_keys(
     State(state): State<AppState>,
     Extension(user): Extension<dtos::user::User>,
-) -> Result<Json<Vec<ApiKeyResponse>>, (StatusCode, String)> {
+) -> Result<Json<Vec<dtos::api_key::ApiKey>>, (StatusCode, String)> {
     let mut conn = state
         .db_pool
         .get()
@@ -87,7 +63,9 @@ pub async fn list_api_keys(
         .context("service")
         .map_err(internal_error)?;
 
-    Ok(Json(list.into_iter().map(ApiKeyResponse::from).collect()))
+    Ok(Json(
+        list.into_iter().map(dtos::api_key::ApiKey::from).collect(),
+    ))
 }
 
 #[tracing::instrument(skip(state, user))]

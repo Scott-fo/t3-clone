@@ -245,7 +245,7 @@ async fn process_stream(
     let api_key = env::var("OPENAI_API_KEY").context("OPENAI_API_KEY must be set")?;
     let client = Client::new();
 
-    let instructions = "All code that you generate MUST be generated so that it is correctly rendered inside of a <code> block. Keep decoration in text to a minimum, just respond with clear information, in markdown format.";
+    let instructions = "All code that you generate MUST be generated so that it is correctly rendered inside of a <code> block. Keep decoration in text to a minimum, just respond with clear information, in markdown format. RemarkGFM is used to help parse your output.";
 
     let request_body = OpenAIRequest::new_from_str(
         model,
