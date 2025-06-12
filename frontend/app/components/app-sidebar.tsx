@@ -20,8 +20,9 @@ import { Button } from "./ui/button";
 import { useChatStore } from "~/stores/chat";
 import { useUserStore } from "~/stores/user";
 import { useReplicache } from "~/contexts/ReplicacheContext";
+import { toast } from "sonner";
 
-export const MAX_PINNED_CHATS = 5;
+export const MAX_PINNED_CHATS = 9;
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate();
@@ -30,6 +31,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const allChats = useChatStore((state) => state.data);
   const user = useUserStore((state) => state.data);
+
+  const currentChat = allChats.find((c) => c.id === activeId) ?? null;
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -75,6 +78,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           navigate(href("/chat/:thread_id", { thread_id: nanoid() }));
           break;
         }
+        case "h": {
+          event.preventDefault();
+          if (currentChat) {
+            handlePinChat(activeId, !currentChat.pinned);
+          }
+          break;
+        }
         case "1":
         case "2":
         case "3":
@@ -101,7 +111,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const handlePinChat = (id: string, pinned: boolean) => {
     if (pinned && pinnedChats.length >= MAX_PINNED_CHATS) {
-      // add toast here with sonner
+      toast("Hotbar limit reached", {
+        description: `You can only add ${MAX_PINNED_CHATS} chats to hotbar at once`,
+      });
       return;
     }
     rep.mutate.updateChat({
