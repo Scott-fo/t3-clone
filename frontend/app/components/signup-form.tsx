@@ -35,7 +35,7 @@ export default function SignupForm({
     },
     onError: (error: any) => {
       if (error.response && error.response.data) {
-        setError(error.response.data.error || "");
+        setError(error.response.data || "");
       } else {
         console.error("Login error", error);
       }

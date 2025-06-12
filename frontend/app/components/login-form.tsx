@@ -36,8 +36,9 @@ export default function LoginForm({
       setUser(res.data);
     },
     onError: (error: any) => {
+      console.log(error);
       if (error.response && error.response.data) {
-        setError(error.response.data.error || "");
+        setError(error.response.data || "");
       } else {
         console.error("Login error", error);
       }
