@@ -114,7 +114,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [pinnedChats, navigate]);
+  }, [pinnedChats, activeId, navigate]);
 
   const handlePinChat = (id: string, pinned: boolean) => {
     if (pinned && pinnedChats.length >= MAX_PINNED_CHATS) {
