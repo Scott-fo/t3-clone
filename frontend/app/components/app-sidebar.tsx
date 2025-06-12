@@ -21,6 +21,7 @@ import { useChatStore } from "~/stores/chat";
 import { useUserStore } from "~/stores/user";
 import { useReplicache } from "~/contexts/ReplicacheContext";
 import { toast } from "sonner";
+import { CommandMenu } from "./chat-menu";
 
 export const MAX_PINNED_CHATS = 9;
 
@@ -35,6 +36,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const currentChat = allChats.find((c) => c.id === activeId) ?? null;
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [commandOpen, setCommandOpen] = useState(false);
 
   const visibleChats = useMemo(
     () => allChats.filter((chat) => !chat.archived),
@@ -83,6 +85,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           if (currentChat) {
             handlePinChat(activeId, !currentChat.pinned);
           }
+          break;
+        }
+        case "s": {
+          event.preventDefault();
+          setCommandOpen((prev) => !prev);
           break;
         }
         case "1":
@@ -164,6 +171,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <NavUser user={user!} />
       </SidebarFooter>
+      <CommandMenu
+        open={commandOpen}
+        setOpen={setCommandOpen}
+        chats={visibleChats}
+      />
     </Sidebar>
   );
 }
