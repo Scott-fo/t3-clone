@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useMemo, useState, useEffect } from "react";
 import { Command } from "lucide-react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { nanoid } from "nanoid";
 import { href } from "react-router";
 
@@ -26,6 +26,7 @@ export const MAX_PINNED_CHATS = 5;
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate();
   const rep = useReplicache();
+  const activeId = useParams()?.thread_id ?? "";
 
   const allChats = useChatStore((state) => state.data);
   const user = useUserStore((state) => state.data);
@@ -142,6 +143,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           pinnedChats={pinnedChats}
           historyChats={historyChats}
           searchQuery={searchQuery}
+          activeId={activeId}
           onSearchQueryChange={setSearchQuery}
           onPinChat={handlePinChat}
           onDeleteChat={handleDeleteChat}
