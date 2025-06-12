@@ -50,7 +50,7 @@ export default function Page() {
     <div className="h-full max-h-screen h-screen w-full mx-auto flex flex-col overflow-hidden">
       <SidebarTrigger
         className={cn(
-          `absolute opacity-100 top-3 left-3 transition-opacity duration-200`,
+          `absolute opacity-100 top-3 left-3 transition-opacity duration-200 z-0`,
           sidebar.open && "opacity-0"
         )}
       />

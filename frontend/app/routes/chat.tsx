@@ -16,9 +16,12 @@ import { useChatStream } from "~/contexts/ChatStreamContext";
 import { useMessageStore } from "~/stores/message";
 import type { Message } from "~/domain/message";
 import { useUserStore } from "~/stores/user";
+import { SidebarTrigger, useSidebar } from "~/components/ui/sidebar";
+import { cn } from "~/lib/utils";
 
 export default function Page({ params }: Route.ComponentProps) {
   const rep = useReplicache();
+  const sidebar = useSidebar();
   const { startStream, pendingResponses } = useChatStream();
 
   const user = useUserStore((state) => state.data);
@@ -126,12 +129,15 @@ export default function Page({ params }: Route.ComponentProps) {
   );
 
   return (
-    <div className="h-full max-h-screen h-screen w-full mx-auto flex flex-col overflow-hidden">
+    <div className="relative h-full max-h-screen h-screen w-full mx-auto flex flex-col overflow-hidden">
+      <SidebarTrigger
+        className={cn(
+          `z-50 absolute opacity-100 top-3 left-3 transition-opacity duration-200`,
+          sidebar.open && "opacity-0"
+        )}
+      />
       <div
         ref={containerRef}
-        style={{
-          contain: "layout paint",
-        }}
         className="flex-1 overflow-y-auto px-4 py-4 space-y-10 custom-scrollbar"
       >
         {showMessages && <MessageList messages={messages} />}
