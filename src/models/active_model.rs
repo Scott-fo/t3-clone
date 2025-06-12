@@ -2,7 +2,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::{ai::openai::Reasoning, dtos};
+use crate::{ai::reasoning::EffortLevel, dtos};
 
 use super::replicache::ReplicachePullModel;
 
@@ -21,6 +21,7 @@ pub struct ActiveModel {
 
 #[derive(AsChangeset)]
 #[diesel(table_name = crate::schema::active_models)]
+#[diesel(treat_none_as_null = true)]
 pub struct Changeset {
     pub provider: String,
     pub model: String,
@@ -34,7 +35,7 @@ pub struct CreateArgs {
     pub id: String,
     pub provider: String,
     pub model: String,
-    pub reasoning: Option<Reasoning>,
+    pub reasoning: Option<EffortLevel>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -44,7 +45,7 @@ pub struct UpdateArgs {
     pub id: String,
     pub provider: String,
     pub model: String,
-    pub reasoning: Option<Reasoning>,
+    pub reasoning: Option<EffortLevel>,
     pub updated_at: DateTime<Utc>,
 }
 

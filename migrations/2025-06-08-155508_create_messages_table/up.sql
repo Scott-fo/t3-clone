@@ -4,6 +4,7 @@ CREATE TABLE messages (
   user_id             VARCHAR(255) NOT NULL,
   role                VARCHAR(255) NOT NULL DEFAULT 'user',
   body                TEXT         NOT NULL,
+  reasoning           TEXT         NULL,
   version             INT          NOT NULL DEFAULT 1,
   created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

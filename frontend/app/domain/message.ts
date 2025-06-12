@@ -5,10 +5,9 @@ type MessageRole = "user" | "assistant";
 export type Message = {
   readonly id: string;
   readonly chat_id: string;
-  readonly user_id: string;
   readonly role: MessageRole;
   readonly body: string;
-  readonly version: number;
+  readonly reasoning?: string | null;
   readonly created_at: string;
   readonly updated_at: string;
 };

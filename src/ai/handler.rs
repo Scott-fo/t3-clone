@@ -6,7 +6,7 @@ use tokio_retry2::{
 };
 
 use crate::{
-    ai::openai::Reasoning,
+    ai::reasoning::EffortLevel,
     app::AppState,
     models::message::{CreateArgs, Message},
 };
@@ -72,6 +72,7 @@ async fn generate_and_save_title(
         id: chat_id.to_string(),
         title: Some(title),
         pinned: None,
+        pinned_at: None,
         archived: None,
         updated_at: Utc::now(),
     };
@@ -100,7 +101,7 @@ pub fn spawn_chat_task(state: AppState, user_id: String, args: CreateArgs) {
 
     let mut model = "gpt-4.1-mini".to_string();
     let mut provider = super::AiProvider::OpenAi;
-    let mut reasoning: Option<Reasoning> = None;
+    let mut effort: Option<EffortLevel> = None;
 
     if let Ok(Some(active)) = state
         .service_container
@@ -111,7 +112,7 @@ pub fn spawn_chat_task(state: AppState, user_id: String, args: CreateArgs) {
             provider = p;
         }
 
-        reasoning = active.reasoning.as_deref().and_then(|s| s.parse().ok());
+        effort = active.reasoning.as_deref().and_then(|s| s.parse().ok());
 
         model = active.model;
     } else {
@@ -148,21 +149,26 @@ pub fn spawn_chat_task(state: AppState, user_id: String, args: CreateArgs) {
                     args.body,
                     model,
                     previous_response_id,
-                    reasoning,
+                    effort,
                 )
                 .await
             }
         };
 
         match result {
-            Ok(Some((msg_id, final_content))) => {
-                tracing::info!(%msg_id, %final_content, "Stream completed. Saving to DB or processing...");
+            Ok(Some(stream_result)) => {
+                let msg_id = stream_result.msg_id;
+                let content = stream_result.content;
+                let reasoning = stream_result.reasoning;
+
+                tracing::info!(%msg_id, %content, "Stream completed. Saving to DB or processing...");
 
                 let ca = CreateArgs {
                     id: msg_id,
                     chat_id: args.chat_id,
                     role: "assistant".to_string(),
-                    body: final_content,
+                    body: content,
+                    reasoning,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
                 };

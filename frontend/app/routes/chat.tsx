@@ -23,16 +23,20 @@ export default function Page({ params }: Route.ComponentProps) {
 
   const user = useUserStore((state) => state.data);
   const messages = useMessageStore((state) => state.data);
+
   const [showMessages, setShowMessages] = useState(false);
 
   const { sync, cleanup, appendMessage } = useMessageStore.getState();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const pendingRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const hasScrolledToBottomRef = useRef<boolean>(false);
 
   useEffect(() => {
     sync(rep, params.thread_id);
+
+    chatInputRef.current?.focus();
 
     return () => {
       cleanup();
@@ -91,11 +95,9 @@ export default function Page({ params }: Route.ComponentProps) {
       if (messages.length === 0) {
         rep.mutate.createChat({
           id: params.thread_id,
-          user_id: user.id,
           forked: false,
           created_at: now,
           updated_at: now,
-          version: 1,
         });
       } else {
         rep.mutate.updateChat({
@@ -140,6 +142,7 @@ export default function Page({ params }: Route.ComponentProps) {
             key="pending"
             id="pending"
             role="assistant"
+            reasoning={pendingResponses[params.thread_id]?.reasoning ?? null}
             msg={pendingResponses[params.thread_id]?.content ?? ""}
           />
         )}
@@ -159,7 +162,11 @@ export default function Page({ params }: Route.ComponentProps) {
             className="relative z-10 rounded-tl-xl rounded-tr-xl
                          p-2 bg-primary-foreground"
           >
-            <ChatInput handleSubmit={onSendMessage} disabled={isPending} />
+            <ChatInput
+              ref={chatInputRef}
+              handleSubmit={onSendMessage}
+              disabled={isPending}
+            />
           </div>
         </div>
       </div>
@@ -175,6 +182,7 @@ const MessageList = memo(({ messages }: { messages: Message[] }) => {
       chat_id={msg.chat_id}
       role={msg.role}
       msg={msg.body}
+      reasoning={msg.reasoning}
     />
   ));
 });

@@ -30,6 +30,7 @@ diesel::table! {
         pinned -> Bool,
         forked -> Bool,
         version -> Integer,
+        pinned_at -> Nullable<Timestamp>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
@@ -46,6 +47,7 @@ diesel::table! {
         #[max_length = 255]
         role -> Varchar,
         body -> Text,
+        reasoning -> Nullable<Text>,
         version -> Integer,
         created_at -> Timestamp,
         updated_at -> Timestamp,

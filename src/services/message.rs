@@ -67,6 +67,7 @@ impl MessageService {
             user_id: user_id.to_string(),
             role: args.role,
             body: args.body,
+            reasoning: args.reasoning,
             version: 1,
             created_at: args.created_at.naive_utc(),
             updated_at: args.updated_at.naive_utc(),
@@ -84,11 +85,16 @@ impl MessageService {
         conn.transaction(|conn| {
             let existing = self.check_ownership(conn, &args.id, user_id)?;
 
-            let changeset = Changeset {
+            let mut changeset = Changeset {
                 body: args.body,
                 version: existing.version + 1,
+                reasoning: None,
                 updated_at: args.updated_at.naive_utc(),
             };
+
+            if args.reasoning.is_some() {
+                changeset.reasoning = args.reasoning.unwrap();
+            }
 
             self.message_repo.update(conn, &args.id, changeset)
         })

@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 
 type Preferences = {
   wrapText: boolean;
+  showReasoning: boolean;
 };
 
 interface State {
@@ -13,7 +14,7 @@ interface State {
 export const usePreferencesStore = create<State>()(
   persist(
     (set) => ({
-      data: { wrapText: false },
+      data: { wrapText: false, showReasoning: false },
       setData: (data) => set({ data }),
     }),
     {

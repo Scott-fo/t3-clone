@@ -41,7 +41,7 @@ impl ActiveModelService {
     ) -> Result<ActiveModel> {
         let mut reasoning = None;
         if let Some(r) = args.reasoning {
-            reasoning = Some(serde_json::to_string(&r)?);
+            reasoning = Some(r.to_string());
         }
 
         let active_model = ActiveModel {
@@ -76,7 +76,7 @@ impl ActiveModelService {
 
             let mut reasoning = None;
             if let Some(r) = args.reasoning {
-                reasoning = Some(serde_json::to_string(&r)?);
+                reasoning = Some(r.to_string());
             }
 
             let changeset = Changeset {

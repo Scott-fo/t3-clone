@@ -1,5 +1,5 @@
-import { useLocation } from "react-router";
-import { memo, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
+import { memo, useMemo, useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import {
   SidebarGroup,
@@ -10,11 +10,16 @@ import { Input } from "~/components/ui/input";
 import type { Chat } from "~/domain/chat";
 import { ChatItem } from "./chat-item";
 import { useReplicache } from "~/contexts/ReplicacheContext";
+import { TooltipProvider } from "./ui/tooltip";
+import { href } from "react-router";
+import { nanoid } from "nanoid";
+
+const MAX_PINNED_CHATS = 5;
 
 export const NavMain = memo(({ items }: { items: Chat[] }) => {
   const rep = useReplicache();
-
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredChats = useMemo(() => {
@@ -26,11 +31,64 @@ export const NavMain = memo(({ items }: { items: Chat[] }) => {
     );
   }, [items, searchQuery]);
 
-  const pinnedChats = filteredChats.filter((item) => item.pinned);
+  const pinnedChats = filteredChats
+    .filter((item) => item.pinned)
+    .sort(
+      (a, b) =>
+        new Date(a.pinned_at!).getTime() - new Date(b.pinned_at!).getTime()
+    );
   const historyChats = filteredChats.filter((item) => !item.pinned);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!event.metaKey && !event.ctrlKey) {
+        return;
+      }
+
+      switch (event.key) {
+        case "c": {
+          event.preventDefault();
+          navigate(href("/chat/:thread_id", { thread_id: nanoid() }));
+          break;
+        }
+
+        case "1":
+        case "2":
+        case "3":
+        case "4":
+        case "5": {
+          event.preventDefault();
+          const keyNumber = parseInt(event.key, 10);
+          const chatToNavigate = pinnedChats[keyNumber - 1];
+          if (chatToNavigate) {
+            navigate(`/chat/${chatToNavigate.id}`);
+          }
+          break;
+        }
+
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [pinnedChats, navigate]);
+
   const handlePinChat = (id: string, pinned: boolean) => {
-    rep.mutate.updateChat({ id, pinned, updated_at: new Date().toISOString() });
+    if (pinned && pinnedChats.length >= MAX_PINNED_CHATS) {
+      // add sonner
+      return;
+    }
+    rep.mutate.updateChat({
+      id,
+      pinned,
+      updated_at: new Date().toISOString(),
+      pinned_at: new Date().toISOString(),
+    });
   };
 
   const handleDeleteChat = (id: string) => {
@@ -64,19 +122,35 @@ export const NavMain = memo(({ items }: { items: Chat[] }) => {
         />
       </div>
 
-      {pinnedChats.length > 0 && (
-        <SidebarGroup>
-          <SidebarGroupLabel>Pinned</SidebarGroupLabel>
-          <SidebarMenu>{renderChatList(pinnedChats)}</SidebarMenu>
-        </SidebarGroup>
-      )}
+      <TooltipProvider delayDuration={1000} skipDelayDuration={200}>
+        {pinnedChats.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Hotbar</SidebarGroupLabel>
+            <SidebarMenu>
+              {pinnedChats.slice(0, MAX_PINNED_CHATS).map((item, index) => {
+                const isActive = location.pathname.includes(item.id);
+                return (
+                  <ChatItem
+                    key={item.id}
+                    item={item}
+                    isActive={isActive}
+                    onPin={handlePinChat}
+                    onDelete={handleDeleteChat}
+                    pinIndex={index + 1}
+                  />
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
 
-      {historyChats.length > 0 && (
-        <SidebarGroup>
-          <SidebarGroupLabel>History</SidebarGroupLabel>
-          <SidebarMenu>{renderChatList(historyChats)}</SidebarMenu>
-        </SidebarGroup>
-      )}
+        {historyChats.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>History</SidebarGroupLabel>
+            <SidebarMenu>{renderChatList(historyChats)}</SidebarMenu>
+          </SidebarGroup>
+        )}
+      </TooltipProvider>
     </div>
   );
 });

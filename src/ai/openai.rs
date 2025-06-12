@@ -1,45 +1,15 @@
-use anyhow::{Context, Error, Result, anyhow, bail};
+use anyhow::{Context, Result, anyhow};
 use futures_util::StreamExt;
 use reqwest::Client;
 use reqwest_eventsource::{Event, EventSource};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::{env, str::FromStr, sync::Arc};
+use std::{env, sync::Arc};
 use tracing::{info, warn};
 
 use crate::services::sse_manager::{EventType, SseManager, SseMessage};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum EffortLevel {
-    Low,
-    Medium,
-    High,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct Reasoning {
-    pub effort: EffortLevel,
-}
-
-impl FromStr for Reasoning {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "high" => Ok(Reasoning {
-                effort: EffortLevel::High,
-            }),
-            "low" => Ok(Reasoning {
-                effort: EffortLevel::Low,
-            }),
-            "medium" => Ok(Reasoning {
-                effort: EffortLevel::Medium,
-            }),
-            _ => bail!("Invalid reasoning level: '{}'", s),
-        }
-    }
-}
+use super::reasoning::{EffortLevel, Reasoning};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "model")]
@@ -89,7 +59,7 @@ impl OpenAIRequest {
         input: String,
         stream: bool,
         previous_response_id: Option<String>,
-        reasoning: Option<Reasoning>,
+        effort: Option<EffortLevel>,
     ) -> Result<Self> {
         match model {
             "gpt-4.1" => Ok(Self::Gpt41 {
@@ -108,23 +78,22 @@ impl OpenAIRequest {
                 previous_response_id,
             }),
             "o4-mini" => {
-                let reasoning =
-                    reasoning.ok_or_else(|| anyhow!("`o4-mini` requires a reasoning field"))?;
+                let effort =
+                    effort.ok_or_else(|| anyhow!("`o4-mini` requires a reasoning field"))?;
                 Ok(Self::O4Mini {
                     input,
                     stream,
                     previous_response_id,
-                    reasoning,
+                    reasoning: Reasoning::new(effort),
                 })
             }
             "o3" => {
-                let reasoning =
-                    reasoning.ok_or_else(|| anyhow!("`o3` requires a reasoning field"))?;
+                let effort = effort.ok_or_else(|| anyhow!("`o3` requires a reasoning field"))?;
                 Ok(Self::O3 {
                     input,
                     stream,
                     previous_response_id,
-                    reasoning,
+                    reasoning: Reasoning::new(effort),
                 })
             }
             other => Err(anyhow!("unknown/unsupported model: {other}")),
@@ -137,12 +106,19 @@ impl OpenAIRequest {
 enum StreamEvent {
     #[serde(rename = "response.in_progress")]
     ResponseInProgress { response: ResponseObject },
+
     #[serde(rename = "response.completed")]
     ResponseCompleted { response: ResponseObject },
+
     #[serde(rename = "response.failed")]
     ResponseFailed { response: ResponseObject },
+
     #[serde(rename = "response.output_text.delta")]
     ResponseOutputTextDelta { item_id: String, delta: String },
+
+    #[serde(rename = "response.reasoning_summary_text.delta")]
+    ResponseReasoningSummaryTextDelta { item_id: String, delta: String },
+
     #[serde(other)]
     Unknown,
 }
@@ -158,7 +134,19 @@ struct ResponseObject {
 struct MessageOutput {
     #[serde(rename = "type")]
     output_type: String,
+
+    #[serde(default)]
     content: Vec<ContentPart>,
+
+    #[serde(default)]
+    summary: Vec<SummaryPart>,
+}
+
+#[derive(Deserialize, Debug)]
+struct SummaryPart {
+    #[serde(rename = "type")]
+    summary_type: String,
+    text: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -173,6 +161,12 @@ struct OpenAIError {
     message: String,
 }
 
+pub struct StreamResult {
+    pub msg_id: String,
+    pub content: String,
+    pub reasoning: Option<String>,
+}
+
 pub async fn stream_openai_response(
     sse_manager: Arc<SseManager>,
     user_id: String,
@@ -180,8 +174,8 @@ pub async fn stream_openai_response(
     prompt: String,
     model: String,
     previous_response_id: Option<String>,
-    reasoning: Option<Reasoning>,
-) -> Result<Option<(String, String)>> {
+    reasoning: Option<EffortLevel>,
+) -> Result<Option<StreamResult>> {
     process_stream(
         &sse_manager,
         &user_id,
@@ -201,8 +195,8 @@ async fn process_stream(
     prompt: &str,
     model: &str,
     previous_response_id: Option<String>,
-    reasoning: Option<Reasoning>,
-) -> Result<Option<(String, String)>> {
+    effort: Option<EffortLevel>,
+) -> Result<Option<StreamResult>> {
     let api_key = env::var("OPENAI_API_KEY").context("OPENAI_API_KEY must be set")?;
     let client = Client::new();
 
@@ -211,7 +205,7 @@ async fn process_stream(
         prompt.to_string(),
         true,
         previous_response_id,
-        reasoning,
+        effort,
     )?;
 
     let request = client
@@ -220,6 +214,7 @@ async fn process_stream(
         .json(&request_body);
 
     let mut es = EventSource::new(request).context("Failed to create event source")?;
+    let mut reasoning_final: Option<String> = None;
 
     while let Some(event) = es.next().await {
         match event {
@@ -254,35 +249,62 @@ async fn process_stream(
                             .await;
                     }
                     StreamEvent::ResponseCompleted { response } => {
-                        let msg_id = Some(response.id);
+                        let outputs = response.output.as_deref().unwrap_or(&[]);
 
-                        let final_content = response
-                            .output
-                            .as_deref()
-                            .unwrap_or(&[])
-                            .iter()
-                            .find(|o| o.output_type == "message")
-                            .and_then(|msg| {
-                                msg.content.iter().find(|c| c.content_type == "output_text")
-                            })
-                            .map(|content| content.text.clone())
-                            .unwrap_or_default();
+                        let maybe_msg_output = outputs.iter().find(|o| o.output_type == "message");
 
-                        let done_payload = json!({
-                            "chat_id": chat_id,
-                            "msg_id": msg_id.clone().unwrap_or_default(),
-                        });
-                        sse_manager
-                            .send_to_user(
-                                user_id,
-                                SseMessage {
-                                    event_type: EventType::Done,
-                                    data: Some(done_payload),
-                                },
-                            )
-                            .await;
-                        info!(%chat_id, "OpenAI stream completed successfully.");
-                        return Ok(Some((msg_id.unwrap_or_default(), final_content)));
+                        if reasoning_final.is_none() {
+                            if let Some(summary_text) = outputs
+                                .iter()
+                                .find(|o| o.output_type == "reasoning")
+                                .map(|o| {
+                                    o.summary
+                                        .iter()
+                                        .filter(|p| p.summary_type == "summary_text")
+                                        .map(|p| p.text.as_str())
+                                        .collect::<Vec<&str>>()
+                                        .join("\n\n")
+                                })
+                            {
+                                if !summary_text.is_empty() {
+                                    reasoning_final = Some(summary_text);
+                                }
+                            }
+                        }
+
+                        if let Some(msg) = maybe_msg_output {
+                            let final_content = msg
+                                .content
+                                .iter()
+                                .find(|c| c.content_type == "output_text")
+                                .map(|c| c.text.clone())
+                                .unwrap_or_default();
+
+                            let done_payload = json!({
+                                "chat_id": chat_id,
+                                "msg_id": response.id,
+                            });
+
+                            sse_manager
+                                .send_to_user(
+                                    user_id,
+                                    SseMessage {
+                                        event_type: EventType::Done,
+                                        data: Some(done_payload),
+                                    },
+                                )
+                                .await;
+
+                            if let Some(r) = &reasoning_final {
+                                info!(%r, "GOT FINAL REASONING");
+                            }
+
+                            return Ok(Some(StreamResult {
+                                msg_id: response.id,
+                                content: final_content,
+                                reasoning: reasoning_final,
+                            }));
+                        }
                     }
                     StreamEvent::ResponseFailed { response } => {
                         let error_msg = response
@@ -307,6 +329,28 @@ async fn process_stream(
 
                         return Err(anyhow!("OpenAI failed: {}", error_msg));
                     }
+
+                    StreamEvent::ResponseReasoningSummaryTextDelta { item_id: _, delta } => {
+                        info!(%delta, "GOT REASONING DELTA");
+                        let chunk_payload = json!({
+                            "chat_id": chat_id,
+                            "reasoning": delta,
+                        });
+
+                        sse_manager
+                            .send_to_user(
+                                user_id,
+                                SseMessage {
+                                    event_type: EventType::Chunk,
+                                    data: Some(chunk_payload),
+                                },
+                            )
+                            .await;
+
+                        reasoning_final =
+                            Some(format!("{}{}", reasoning_final.unwrap_or_default(), delta));
+                    }
+
                     StreamEvent::ResponseInProgress { .. } => { /* Do nothing */ }
                     StreamEvent::Unknown => {
                         warn!(data, "Received an unknown event type from OpenAI.");
@@ -315,6 +359,22 @@ async fn process_stream(
             }
             Err(e) => {
                 warn!(error = %e, "EventSource stream error.");
+
+                let error_payload = json!({
+                    "chat_id": chat_id,
+                    "error": e.to_string(),
+                });
+
+                sse_manager
+                    .send_to_user(
+                        &user_id,
+                        SseMessage {
+                            event_type: EventType::Err,
+                            data: Some(error_payload),
+                        },
+                    )
+                    .await;
+
                 es.close();
                 return Err(anyhow!("EventSource stream error: {}", e));
             }

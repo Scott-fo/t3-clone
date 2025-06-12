@@ -25,6 +25,7 @@ pub struct Message {
     pub user_id: String,
     pub role: String,
     pub body: String,
+    pub reasoning: Option<String>,
     pub version: i32,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -34,6 +35,7 @@ pub struct Message {
 #[diesel(table_name = crate::schema::messages)]
 pub struct Changeset {
     pub body: Option<String>,
+    pub reasoning: Option<String>,
     pub version: i32,
     pub updated_at: NaiveDateTime,
 }
@@ -44,6 +46,7 @@ pub struct CreateArgs {
     pub chat_id: String,
     pub role: String,
     pub body: String,
+    pub reasoning: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -52,6 +55,7 @@ pub struct CreateArgs {
 pub struct UpdateArgs {
     pub id: String,
     pub body: Option<String>,
+    pub reasoning: Option<Option<String>>,
     pub updated_at: DateTime<Utc>,
 }
 
@@ -81,6 +85,7 @@ impl From<Message> for dtos::message::Message {
             chat_id: value.chat_id,
             role: value.role,
             body: value.body,
+            reasoning: value.reasoning,
             created_at: value.created_at.and_utc(),
             updated_at: value.updated_at.and_utc(),
         }

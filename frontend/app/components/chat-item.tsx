@@ -2,22 +2,27 @@ import { href, Link } from "react-router";
 import { Loader2, Pin, PinOff, SplitIcon, Trash2 } from "lucide-react";
 import { SidebarMenuButton, SidebarMenuItem } from "~/components/ui/sidebar";
 import { Button } from "~/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "~/components/ui/tooltip";
+import { TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import type { Chat } from "~/domain/chat";
 import { useChatStream } from "~/contexts/ChatStreamContext";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import { Badge } from "./ui/badge";
 
 interface ChatItemProps {
   item: Chat;
   isActive: boolean;
+  pinIndex?: number;
   onPin: (id: string, pinned: boolean) => void;
   onDelete: (id: string) => void;
 }
 
-export function ChatItem({ item, isActive, onPin, onDelete }: ChatItemProps) {
+export function ChatItem({
+  item,
+  isActive,
+  onPin,
+  pinIndex,
+  onDelete,
+}: ChatItemProps) {
   const { pendingResponses } = useChatStream();
   const isPending = !!pendingResponses[item.id];
 
@@ -36,11 +41,16 @@ export function ChatItem({ item, isActive, onPin, onDelete }: ChatItemProps) {
   // can't get the tooltip to work on sidebarmenu button, so ill just wrap it
   return (
     <SidebarMenuItem className="group/chat relative">
-      <Tooltip delayDuration={1000}>
+      <TooltipPrimitive.Root>
         <TooltipTrigger asChild>
           <SidebarMenuButton isActive={isActive} asChild>
             <Link to={href("/chat/:thread_id", { thread_id: item.id })}>
               <>
+                {pinIndex && (
+                  <Badge className="w-6" variant="default">
+                    {pinIndex}
+                  </Badge>
+                )}
                 {item.forked && <SplitIcon />}
                 <span className="truncate ">{item.title || "New chat"}</span>
               </>
@@ -48,9 +58,8 @@ export function ChatItem({ item, isActive, onPin, onDelete }: ChatItemProps) {
           </SidebarMenuButton>
         </TooltipTrigger>
         <TooltipContent side="right">{item.title || "New chat"}</TooltipContent>
-      </Tooltip>
+      </TooltipPrimitive.Root>
 
-      {/* 4. Conditionally apply classes for visibility */}
       <div
         className={`
           absolute right-0 top-0 h-full w-1/2
@@ -59,17 +68,16 @@ export function ChatItem({ item, isActive, onPin, onDelete }: ChatItemProps) {
           transition-opacity duration-200
           ${
             isPending
-              ? "opacity-100" // Always visible when pending
-              : "opacity-0 group-hover/chat:opacity-100 pointer-events-none" // Visible only on hover when not pending
+              ? "opacity-100"
+              : "opacity-0 group-hover/chat:opacity-100 pointer-events-none"
           }
         `}
       >
-        {/* 3. Conditionally render loader or buttons */}
         {isPending ? (
           <Loader2 className="h-4 w-4 mr-2 text-primary animate-spin" />
         ) : (
           <>
-            <Tooltip delayDuration={1000}>
+            <TooltipPrimitive.Root>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
@@ -85,10 +93,10 @@ export function ChatItem({ item, isActive, onPin, onDelete }: ChatItemProps) {
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top">
-                {item.pinned ? "Unpin chat" : "Pin chat"}
+                {item.pinned ? "Remove from hotbar" : "Add to hotbar"}
               </TooltipContent>
-            </Tooltip>
-            <Tooltip delayDuration={1000}>
+            </TooltipPrimitive.Root>
+            <TooltipPrimitive.Root>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
@@ -105,7 +113,7 @@ export function ChatItem({ item, isActive, onPin, onDelete }: ChatItemProps) {
               >
                 Delete chat
               </TooltipContent>
-            </Tooltip>
+            </TooltipPrimitive.Root>
           </>
         )}
       </div>

@@ -8,6 +8,7 @@ pub struct Chat {
     pub pinned: bool,
     pub archived: bool,
     pub forked: bool,
+    pub pinned_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

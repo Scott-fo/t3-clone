@@ -1,8 +1,8 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -13,17 +13,14 @@ import { useMessageStore } from "~/stores/message";
 import { nanoid } from "nanoid";
 import { useUserStore } from "~/stores/user";
 
-type StreamState = {
-  pending: string;
-};
-
 interface PendingResponse {
   content: string;
+  reasoning: string;
 }
 
 interface ChatStreamContextType {
   pendingResponses: Record<string, PendingResponse>;
-  startStream: (chat_id: string) => void;
+  startStream: (chatId: string) => void;
 }
 
 const ChatStreamContext = createContext<ChatStreamContextType | null>(null);
@@ -46,98 +43,99 @@ export const ChatStreamProvider: React.FC<Props> = ({ children }) => {
     Record<string, PendingResponse>
   >({});
 
-  const streams = useRef<Record<string, StreamState>>({}).current;
+  const startStream = useCallback((chatId: string) => {
+    setPendingResponses((prev) => ({
+      ...prev,
+      [chatId]: { content: "", reasoning: "" },
+    }));
+  }, []);
 
   useEffect(() => {
     const handleStreamChunk = (r: Response) => {
-      const { chat_id, chunk } = r.data;
+      const {
+        chat_id: chatId,
+        chunk,
+        reasoning,
+      } = r.data as {
+        chat_id: string;
+        chunk?: string;
+        reasoning?: string;
+      };
 
-      if (!streams[chat_id]) {
-        streams[chat_id] = { pending: "" };
-      }
+      setPendingResponses((prev) => {
+        const current = prev[chatId] ?? { content: "", reasoning: "" };
 
-      const state = streams[chat_id];
-      state.pending += chunk;
-
-      setPendingResponses((p) => ({
-        ...p,
-        [chat_id]: {
-          content: state.pending,
-        },
-      }));
+        return {
+          ...prev,
+          [chatId]: {
+            content: chunk ? current.content + chunk : current.content,
+            reasoning: reasoning
+              ? current.reasoning + reasoning
+              : current.reasoning,
+          },
+        };
+      });
     };
 
     const handleStreamDone = (r: Response) => {
-      console.log("Handling stream done: ", r);
+      const { chat_id: chatId, msg_id } = r.data;
 
-      const { chat_id, msg_id } = r.data;
-      const state = streams[chat_id];
+      setPendingResponses((prevStreams) => {
+        const streamToFinalize = prevStreams[chatId];
 
-      if (state && user) {
-        const now = new Date().toISOString();
+        if (streamToFinalize && user) {
+          const now = new Date().toISOString();
+          const id = msg_id ? msg_id : nanoid();
 
-        const id = msg_id ? msg_id : nanoid();
+          const final_msg = {
+            id,
+            chat_id: chatId,
+            user_id: user?.id,
+            role: "assistant",
+            body: streamToFinalize.content,
+            reasoning: streamToFinalize.reasoning,
+            created_at: now,
+            updated_at: now,
+            version: 1,
+          } as Message;
 
-        const final_msg = {
-          id,
-          chat_id,
-          user_id: user?.id,
-          role: "assistant",
-          body: state.pending,
-          created_at: now,
-          updated_at: now,
-          version: 1,
-        } as Message;
+          useMessageStore.getState().appendMessage(final_msg);
 
-        useMessageStore.getState().appendMessage(final_msg);
+          rep.mutate.createMessage(final_msg);
+          rep.mutate.updateChat({
+            id: chatId,
+            updated_at: now,
+          });
+        }
 
-        rep.mutate.createMessage(final_msg);
-        rep.mutate.updateChat({
-          id: chat_id,
-          updated_at: now,
-        });
-
-        delete streams[chat_id];
-        setPendingResponses((p) => {
-          const { [chat_id]: _, ...rest } = p;
-          return rest;
-        });
-      }
+        const { [chatId]: _, ...rest } = prevStreams;
+        return rest;
+      });
     };
 
     const handleStreamError = (r: Response) => {
-      console.log("Handling stream error: ", r);
+      const { chat_id: chatId, error } = r.data;
 
-      const { chat_id, error } = r.data;
-      const state = streams[chat_id];
+      setPendingResponses((prevStreams) => {
+        const streamWithError = prevStreams[chatId];
 
-      if (state && user) {
-        state.pending = `Error: ${error}`;
-        setPendingResponses((p) => ({
-          ...p,
-          [chat_id]: {
-            content: state.pending,
-          },
-        }));
+        if (streamWithError && user) {
+          const now = new Date().toISOString();
+          const errorMessage = `Error: ${error}`;
 
-        const now = new Date().toISOString();
-        rep.mutate.createMessage({
-          id: `${chat_id}-error-${Date.now()}`,
-          chat_id,
-          user_id: user.id,
-          role: "assistant",
-          body: state.pending,
-          created_at: now,
-          updated_at: now,
-          version: 1,
-        });
+          rep.mutate.createMessage({
+            id: `${chatId}-error-${Date.now()}`,
+            chat_id: chatId,
+            role: "assistant",
+            body: errorMessage,
+            created_at: now,
+            updated_at: now,
+          });
+        }
 
-        delete streams[chat_id];
-        setPendingResponses((p) => {
-          const { [chat_id]: _, ...rest } = p;
-          return rest;
-        });
-      }
+        const { [chatId]: _, ...rest } = prevStreams;
+        return rest;
+      });
     };
 
     sse.addEventListener("chat-stream-chunk", handleStreamChunk);
@@ -149,15 +147,7 @@ export const ChatStreamProvider: React.FC<Props> = ({ children }) => {
       sse.removeEventListener("chat-stream-done", handleStreamDone);
       sse.removeEventListener("chat-stream-error", handleStreamError);
     };
-  }, [sse, rep, streams]);
-
-  async function startStream(chat_id: string) {
-    streams[chat_id] = { pending: "" };
-    setPendingResponses((p) => ({
-      ...p,
-      [chat_id]: { content: "" },
-    }));
-  }
+  }, [sse, rep, user]);
 
   return (
     <ChatStreamContext.Provider value={{ pendingResponses, startStream }}>

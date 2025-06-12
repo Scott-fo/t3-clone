@@ -7,9 +7,15 @@ import { forwardRef, memo, useState } from "react";
 import Markdown from "react-markdown";
 import { CodeBlock } from "./code-block";
 import remarkGfm from "remark-gfm";
-import { CheckIcon, SplitIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  Loader2,
+  SplitIcon,
+} from "lucide-react";
 import { Button } from "./ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { useChatStore } from "~/stores/chat";
 import { useMessageStore } from "~/stores/message";
 import type { Chat } from "~/domain/chat";
@@ -20,11 +26,15 @@ import {
   type ReplicacheType,
 } from "~/contexts/ReplicacheContext";
 import type { Replicache } from "replicache";
+import { usePreferencesStore } from "~/stores/preferences";
+import { cn } from "~/lib/utils";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 
 interface Props {
   id: string;
   role: "user" | "assistant";
   msg: string;
+  reasoning?: string | null;
   chat_id: string;
 }
 
@@ -52,7 +62,7 @@ const CopyButton = ({
   };
 
   return (
-    <Tooltip>
+    <TooltipPrimitive.Root>
       <TooltipTrigger asChild>
         <Button
           size="icon"
@@ -68,7 +78,7 @@ const CopyButton = ({
         </Button>
       </TooltipTrigger>
       <TooltipContent>{copied ? "Copied!" : "Copy message"}</TooltipContent>
-    </Tooltip>
+    </TooltipPrimitive.Root>
   );
 };
 
@@ -78,7 +88,7 @@ const UserMessageContent = memo(({ msg }: ContentProps) => (
       remarkPlugins={[remarkGfm]}
       components={{
         a: CitationLink,
-        code({ className, children }) {
+        code({ children }) {
           return (
             <CodeBlock
               language="text"
@@ -164,15 +174,66 @@ const forkChat = (
   });
 };
 
+const ReasoningView = memo(
+  ({ id, reasoning }: { id: string; reasoning: string }) => {
+    const isPending = id === "pending";
+
+    const prefs = usePreferencesStore((state) => state.data);
+    const setPrefs = usePreferencesStore((state) => state.setData);
+
+    const toggle = () => {
+      setPrefs({ ...prefs, showReasoning: !prefs.showReasoning });
+    };
+
+    return (
+      <div className="w-full mb-6">
+        <button
+          onClick={() => toggle()}
+          className="flex items-center gap-1 text-sm text-muted-foreground transition-colors"
+        >
+          {prefs.showReasoning ? (
+            <ChevronDownIcon className="h-4 w-4" />
+          ) : (
+            <ChevronRightIcon className="h-4 w-4" />
+          )}
+          {isPending ? (
+            <>
+              <span>Reasoning</span>
+              <Loader2 className="animate-spin size-4" />
+            </>
+          ) : (
+            <span>Reasoning</span>
+          )}
+        </button>
+        {prefs.showReasoning && (
+          <div className="mt-2 p-3 border rounded-lg bg-muted/50 text-sm">
+            <Markdown>{reasoning}</Markdown>
+          </div>
+        )}
+      </div>
+    );
+  }
+);
+
 const AssistantMessageContent = memo(
-  ({ id, chat_id, msg }: { id: string; chat_id: string; msg: string }) => {
+  ({
+    id,
+    chat_id,
+    reasoning,
+    msg,
+  }: {
+    id: string;
+    chat_id: string;
+    msg: string;
+    reasoning?: string | null;
+  }) => {
     const chat = useChatStore((state) =>
       state.data.find((c) => c.id === chat_id)
     );
     const msgs = useMessageStore((state) => state.data);
     const rep = useReplicache();
 
-    if (id === "pending" && msg === "") {
+    if (id === "pending" && msg === "" && !reasoning) {
       return (
         <p className="flex items-center">
           <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin text-primary-500" />
@@ -186,7 +247,7 @@ const AssistantMessageContent = memo(
     }
 
     return (
-      <div className="prose break-words">
+      <div className="prose break-words group/message">
         <Markdown
           remarkPlugins={[remarkGfm]}
           components={{
@@ -197,21 +258,23 @@ const AssistantMessageContent = memo(
           {msg}
         </Markdown>
         {id !== "pending" && (
-          <div className="mt-10 flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  onClick={() => forkChat(rep, id, chat as Chat, msgs)}
-                  disabled={!chat}
-                >
-                  <SplitIcon />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Fork chat</TooltipContent>
-            </Tooltip>
-            <CopyButton textToCopy={msg} />
+          <div className="pt-4 flex items-center gap-x-2 opacity-0 group-hover/message:opacity-100 transition-opacity duration-200">
+            <TooltipProvider delayDuration={300}>
+              <TooltipPrimitive.Root>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    onClick={() => forkChat(rep, id, chat as Chat, msgs)}
+                    disabled={!chat}
+                  >
+                    <SplitIcon />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Fork chat</TooltipContent>
+              </TooltipPrimitive.Root>
+              <CopyButton textToCopy={msg} />
+            </TooltipProvider>
           </div>
         )}
       </div>
@@ -220,34 +283,46 @@ const AssistantMessageContent = memo(
 );
 
 export const MessageBubble = memo(
-  forwardRef<HTMLDivElement, Props>(({ id, chat_id, role, msg }, ref) => {
-    const isUser = role === "user";
+  forwardRef<HTMLDivElement, Props>(
+    ({ id, chat_id, role, msg, reasoning }, ref) => {
+      const isUser = role === "user";
 
-    const bubbleContainerClasses = `flex flex-col max-w-3xl min-h-20 my-10 mx-auto ${
-      isUser ? "items-end" : "items-start"
-    }`;
+      const bubbleContainerClasses = `flex flex-col max-w-3xl min-h-20 my-10 mx-auto ${
+        isUser ? "items-end" : "items-start"
+      }`;
 
-    const bubbleStyles = `rounded-lg whitespace-pre-wrap p-3 ${
-      isUser
-        ? "bg-primary max-w-[75%] text-primary-foreground rounded-br-none"
-        : "w-[100%] break-words bg-background text-foreground rounded-bl-none"
-    }`;
+      const bubbleStyles = `rounded-lg whitespace-pre-wrap p-3 ${
+        isUser
+          ? "bg-primary max-w-[75%] text-primary-foreground rounded-br-none"
+          : "w-[100%] break-words bg-background text-foreground rounded-bl-none"
+      }`;
 
-    return (
-      <div ref={ref} className={bubbleContainerClasses}>
-        <div className={bubbleStyles}>
-          {isUser ? (
-            <UserMessageContent msg={msg} />
-          ) : (
-            <AssistantMessageContent id={id} chat_id={chat_id} msg={msg} />
+      return (
+        <div ref={ref} className={cn(bubbleContainerClasses, "group/message")}>
+          <div className={bubbleStyles}>
+            {isUser ? (
+              <UserMessageContent msg={msg} />
+            ) : (
+              <div>
+                {reasoning && <ReasoningView id={id} reasoning={reasoning} />}
+                <AssistantMessageContent
+                  id={id}
+                  chat_id={chat_id}
+                  msg={msg}
+                  reasoning={reasoning}
+                />
+              </div>
+            )}
+          </div>
+          {isUser && (
+            <div className="pt-4 flex justify-end opacity-0 transition-opacity duration-200 group-hover/message:opacity-100">
+              <TooltipProvider delayDuration={300}>
+                <CopyButton textToCopy={msg} variant="secondary" />
+              </TooltipProvider>
+            </div>
           )}
         </div>
-        {isUser && (
-          <div className="mt-4 flex justify-end">
-            <CopyButton textToCopy={msg} variant="secondary" />
-          </div>
-        )}
-      </div>
-    );
-  })
+      );
+    }
+  )
 );

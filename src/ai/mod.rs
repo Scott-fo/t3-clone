@@ -1,5 +1,6 @@
 pub mod handler;
 pub mod openai;
+pub mod reasoning;
 
 use std::str::FromStr;
 

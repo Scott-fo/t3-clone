@@ -1,6 +1,5 @@
 import type { ReadTransaction, WriteTransaction } from "replicache";
-
-type Reasoning = "high" | "medium" | "low";
+import type { Reasoning } from "./ai";
 
 export type ActiveModel = {
   readonly id: string;

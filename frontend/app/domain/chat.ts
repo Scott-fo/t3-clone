@@ -4,12 +4,11 @@ import type { Message } from "./message";
 // fix this type.
 export type Chat = {
   readonly id: string;
-  readonly user_id: string;
   readonly title?: string | null;
   readonly pinned?: boolean;
   readonly archived?: boolean;
   readonly forked: boolean;
-  readonly version: number;
+  readonly pinned_at?: string | null;
   readonly created_at: string;
   readonly updated_at: string;
 };

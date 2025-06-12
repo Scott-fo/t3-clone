@@ -204,6 +204,7 @@ fn collect_all_entities(
             archived: cwm.archived,
             forked: cwm.forked,
             version: cwm.version,
+            pinned_at: cwm.pinned_at,
             created_at: cwm.created_at,
             updated_at: cwm.updated_at,
         };

@@ -21,24 +21,20 @@ export default function Page() {
 
       rep.mutate.createChat({
         id: new_chat_id,
-        user_id: user.id,
         title: "test",
         forked: false,
         archived: false,
         created_at: now,
         updated_at: now,
-        version: 1,
       });
 
       rep.mutate.createMessage({
         id: nanoid(),
         chat_id: new_chat_id,
-        user_id: user.id,
         role: "user",
         body: msg,
         created_at: now,
         updated_at: now,
-        version: 1,
       });
 
       startStream(new_chat_id);

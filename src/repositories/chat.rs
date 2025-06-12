@@ -109,6 +109,7 @@ impl ChatRepository {
             archived: chat.archived,
             forked: chat.forked,
             version: chat.version,
+            pinned_at: chat.pinned_at,
             created_at: chat.created_at,
             updated_at: chat.updated_at,
             messages,
