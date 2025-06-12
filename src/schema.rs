@@ -19,6 +19,21 @@ diesel::table! {
 }
 
 diesel::table! {
+    api_keys (id) {
+        id -> Unsigned<Bigint>,
+        #[max_length = 255]
+        user_id -> Varchar,
+        #[max_length = 64]
+        provider -> Varchar,
+        #[max_length = 512]
+        encrypted_key -> Varbinary,
+        version -> Integer,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     chats (id) {
         #[max_length = 255]
         id -> Varchar,
@@ -106,6 +121,7 @@ diesel::table! {
 
 diesel::allow_tables_to_appear_in_same_query!(
     active_models,
+    api_keys,
     chats,
     messages,
     replicache_client_groups,

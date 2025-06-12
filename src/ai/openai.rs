@@ -20,6 +20,7 @@ pub enum OpenAIRequest {
         stream: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
         previous_response_id: Option<String>,
+        instructions: Option<String>,
     },
     #[serde(rename = "gpt-4.1")]
     Gpt41 {
@@ -27,6 +28,7 @@ pub enum OpenAIRequest {
         stream: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
         previous_response_id: Option<String>,
+        instructions: Option<String>,
     },
     #[serde(rename = "gpt-4.1-mini")]
     Gpt41Mini {
@@ -34,6 +36,7 @@ pub enum OpenAIRequest {
         stream: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
         previous_response_id: Option<String>,
+        instructions: Option<String>,
     },
     #[serde(rename = "gpt-4.1-nano")]
     Gpt41Nano {
@@ -41,6 +44,7 @@ pub enum OpenAIRequest {
         stream: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
         previous_response_id: Option<String>,
+        instructions: Option<String>,
     },
     #[serde(rename = "o3-mini")]
     O3Mini {
@@ -49,6 +53,7 @@ pub enum OpenAIRequest {
         #[serde(skip_serializing_if = "Option::is_none")]
         previous_response_id: Option<String>,
         reasoning: Reasoning,
+        instructions: Option<String>,
     },
     #[serde(rename = "o4-mini")]
     O4Mini {
@@ -57,6 +62,7 @@ pub enum OpenAIRequest {
         #[serde(skip_serializing_if = "Option::is_none")]
         previous_response_id: Option<String>,
         reasoning: Reasoning,
+        instructions: Option<String>,
     },
     #[serde(rename = "o3")]
     O3 {
@@ -65,6 +71,7 @@ pub enum OpenAIRequest {
         #[serde(skip_serializing_if = "Option::is_none")]
         previous_response_id: Option<String>,
         reasoning: Reasoning,
+        instructions: Option<String>,
     },
 }
 
@@ -75,27 +82,32 @@ impl OpenAIRequest {
         stream: bool,
         previous_response_id: Option<String>,
         effort: Option<EffortLevel>,
+        instructions: Option<String>,
     ) -> Result<Self> {
         match model {
             "gpt-4o" => Ok(Self::Gpt4o {
                 input,
                 stream,
                 previous_response_id,
+                instructions,
             }),
             "gpt-4.1" => Ok(Self::Gpt41 {
                 input,
                 stream,
                 previous_response_id,
+                instructions,
             }),
             "gpt-4.1-mini" => Ok(Self::Gpt41Mini {
                 input,
                 stream,
                 previous_response_id,
+                instructions,
             }),
             "gpt-4.1-nano" => Ok(Self::Gpt41Nano {
                 input,
                 stream,
                 previous_response_id,
+                instructions,
             }),
             "o4-mini" => {
                 let effort =
@@ -105,6 +117,7 @@ impl OpenAIRequest {
                     stream,
                     previous_response_id,
                     reasoning: Reasoning::new(effort),
+                    instructions,
                 })
             }
             "o3-mini" => {
@@ -115,6 +128,7 @@ impl OpenAIRequest {
                     stream,
                     previous_response_id,
                     reasoning: Reasoning::new(effort),
+                    instructions,
                 })
             }
             "o3" => {
@@ -124,6 +138,7 @@ impl OpenAIRequest {
                     stream,
                     previous_response_id,
                     reasoning: Reasoning::new(effort),
+                    instructions,
                 })
             }
             other => Err(anyhow!("unknown/unsupported model: {other}")),
@@ -230,12 +245,15 @@ async fn process_stream(
     let api_key = env::var("OPENAI_API_KEY").context("OPENAI_API_KEY must be set")?;
     let client = Client::new();
 
+    let instructions = "All code that you generate MUST be generated so that it is correctly rendered inside of a <code> block. Keep decoration in text to a minimum, just respond with clear information, in markdown format.";
+
     let request_body = OpenAIRequest::new_from_str(
         model,
         prompt.to_string(),
         true,
         previous_response_id,
         effort,
+        Some(instructions.to_string()),
     )?;
 
     let request = client
@@ -361,7 +379,6 @@ async fn process_stream(
                     }
 
                     StreamEvent::ResponseReasoningSummaryTextDelta { item_id: _, delta } => {
-                        info!(%delta, "GOT REASONING DELTA");
                         let chunk_payload = json!({
                             "chat_id": chat_id,
                             "reasoning": delta,
@@ -428,6 +445,7 @@ pub async fn generate_title(first_message: &str) -> Result<String> {
         input: prompt,
         stream: false,
         previous_response_id: None,
+        instructions: None,
     };
 
     let response = client

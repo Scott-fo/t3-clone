@@ -1,0 +1,11 @@
+CREATE TABLE api_keys (
+  id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id      VARCHAR(255) NOT NULL,
+  provider     VARCHAR(64)  NOT NULL,
+  encrypted_key VARBINARY(512) NOT NULL,
+  version      INT NOT NULL DEFAULT 1,
+  created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uniq_user_provider (user_id, provider)
+);

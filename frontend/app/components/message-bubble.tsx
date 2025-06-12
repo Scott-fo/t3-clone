@@ -246,13 +246,23 @@ const AssistantMessageContent = memo(
       return <span className="text-red-600">{msg}</span>;
     }
 
+    // way too much vertical space. looks like a styling thing
     return (
-      <div className="prose break-words group/message">
+      <div className="prose-sm break-words group/message">
         <Markdown
           remarkPlugins={[remarkGfm]}
           components={{
             a: CitationLink,
             code: MarkdownCodeRenderer,
+            p: ({ node, ...props }) => (
+              <p {...props} className="m-0 p-0 leading-snug" />
+            ),
+            li: ({ node, ...props }) => (
+              <li {...props} className="m-0 p-0 leading-snug" />
+            ),
+            ol: ({ node, ...props }) => (
+              <ol {...props} className="m-0 p-0 leading-snug" />
+            ),
           }}
         >
           {msg}
