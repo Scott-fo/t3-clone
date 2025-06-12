@@ -5,12 +5,15 @@ import { nanoid } from "nanoid";
 import { useUserStore } from "~/stores/user";
 import { useChatStream } from "~/contexts/ChatStreamContext";
 import { href, useNavigate } from "react-router";
+import { SidebarTrigger, useSidebar } from "~/components/ui/sidebar";
+import { cn } from "~/lib/utils";
 
 export default function Page() {
   const rep = useReplicache();
   const user = useUserStore((state) => state.data);
   const { startStream } = useChatStream();
   const navigate = useNavigate();
+  const sidebar = useSidebar();
 
   const onSendMessage = useCallback(
     async (msg: string) => {
@@ -45,6 +48,12 @@ export default function Page() {
 
   return (
     <div className="h-full max-h-screen h-screen w-full mx-auto flex flex-col overflow-hidden">
+      <SidebarTrigger
+        className={cn(
+          `absolute opacity-100 top-3 left-3 transition-opacity duration-200`,
+          sidebar.open && "opacity-0"
+        )}
+      />
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-10 custom-scrollbar"></div>
       <div className="w-full max-w-3xl mx-auto shrink-0 pt-2">
         <div className="relative">
