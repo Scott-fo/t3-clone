@@ -36,6 +36,7 @@ impl Mutation for MessageMutation {
                         .message_service
                         .create(conn, args.clone(), user_id)?;
 
+                // can move this away to be much cleaner.
                 if args.role == "user" {
                     let messages = state.service_container.message_service.list_for_chat(
                         conn,
@@ -55,7 +56,12 @@ impl Mutation for MessageMutation {
                             user_id.to_string(),
                         );
                     }
-                    ai::handler::spawn_chat_task(state, user_id.to_string(), args.to_owned());
+                    ai::handler::spawn_chat_task(
+                        state,
+                        user_id.to_string(),
+                        args.to_owned(),
+                        messages,
+                    );
                 }
 
                 Ok(Some(msg.id))

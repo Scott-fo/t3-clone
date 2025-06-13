@@ -8,6 +8,8 @@ export default function Page() {
   const { data, error } = useApiKeys();
 
   const openaiKey = data?.find((k) => k.provider === "openai");
+  const googleKey = data?.find((k) => k.provider === "google");
+
   if (error) return <p className="text-red-600">{error.message}</p>;
 
   return (
@@ -19,7 +21,16 @@ export default function Page() {
         )}
       />
       <div className="flex min-h-screen flex-col items-center gap-8 pt-10">
-        <ProviderCard provider="openai" existingKey={openaiKey} />
+        <ProviderCard
+          provider="openai"
+          existingKey={openaiKey}
+          placeholder="sk-..."
+        />
+        <ProviderCard
+          provider="google"
+          existingKey={googleKey}
+          placeholder="AI..."
+        />
       </div>
     </div>
   );

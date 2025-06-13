@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useMemo, useState, useEffect } from "react";
-import { Command } from "lucide-react";
+import { Search } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { nanoid } from "nanoid";
 import { href } from "react-router";
@@ -23,6 +23,7 @@ import { useUserStore } from "~/stores/user";
 import { useReplicache } from "~/contexts/ReplicacheContext";
 import { toast } from "sonner";
 import { CommandMenu } from "./chat-menu";
+import { Input } from "./ui/input";
 
 export const MAX_PINNED_CHATS = 9;
 
@@ -158,6 +159,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <Button size="lg" onClick={() => navigate(`/chat/${nanoid()}`)}>
           New Chat
         </Button>
+        <div className="relative mt-1 border-b">
+          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search chats..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+          />
+        </div>
         <NavMain
           pinnedChats={pinnedChats}
           historyChats={historyChats}

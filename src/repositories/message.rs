@@ -100,10 +100,11 @@ impl MessageRepository {
         conn: &mut MysqlConnection,
         chat_id_param: &str,
     ) -> Result<Vec<Message>> {
-        use crate::schema::messages::dsl::{chat_id, messages};
+        use crate::schema::messages::dsl::{chat_id, created_at, messages};
 
         messages
             .filter(chat_id.eq(chat_id_param))
+            .order_by(created_at.asc())
             .load(conn)
             .context(format!("Error finding messages for chat {}", chat_id_param))
     }

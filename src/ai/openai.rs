@@ -8,82 +8,107 @@ use serde_json::json;
 use std::sync::Arc;
 use tracing::{info, warn};
 
-use crate::services::sse_manager::{EventType, SseManager, SseMessage};
+use crate::{
+    models::message::Message,
+    services::sse_manager::{EventType, SseManager, SseMessage},
+};
 
 use super::reasoning::{EffortLevel, Reasoning};
 
 // MAJOR REFACTOR NEEDED
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Turn {
+    pub role: String,
+    pub content: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum Input {
+    Text(String),
+    Chat(Vec<Turn>),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "model")]
 pub enum OpenAIRequest {
     #[serde(rename = "gpt-4o")]
     Gpt4o {
-        input: String,
+        input: Input,
         stream: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
-        previous_response_id: Option<String>,
         instructions: Option<String>,
     },
     #[serde(rename = "gpt-4.1")]
     Gpt41 {
-        input: String,
+        input: Input,
         stream: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
-        previous_response_id: Option<String>,
         instructions: Option<String>,
     },
     #[serde(rename = "gpt-4.1-mini")]
     Gpt41Mini {
-        input: String,
+        input: Input,
         stream: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
-        previous_response_id: Option<String>,
         instructions: Option<String>,
     },
     #[serde(rename = "gpt-4.1-nano")]
     Gpt41Nano {
-        input: String,
+        input: Input,
         stream: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
-        previous_response_id: Option<String>,
         instructions: Option<String>,
     },
     #[serde(rename = "o3-mini")]
     O3Mini {
-        input: String,
+        input: Input,
         stream: bool,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        previous_response_id: Option<String>,
         reasoning: Reasoning,
         instructions: Option<String>,
     },
     #[serde(rename = "o4-mini")]
     O4Mini {
-        input: String,
+        input: Input,
         stream: bool,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        previous_response_id: Option<String>,
         reasoning: Reasoning,
         instructions: Option<String>,
     },
     #[serde(rename = "o3")]
     O3 {
-        input: String,
+        input: Input,
         stream: bool,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        previous_response_id: Option<String>,
         reasoning: Reasoning,
         instructions: Option<String>,
     },
 }
 
 impl OpenAIRequest {
-    pub fn new_from_str(
+    pub fn prompt(
         model: &str,
-        input: String,
+        text: String,
         stream: bool,
-        previous_response_id: Option<String>,
+        effort: Option<EffortLevel>,
+        instructions: Option<String>,
+    ) -> Result<Self> {
+        Self::build(model, Input::Text(text), stream, effort, instructions)
+    }
+
+    pub fn chat(
+        model: &str,
+        turns: Vec<Turn>,
+        effort: Option<EffortLevel>,
+        instructions: Option<String>,
+    ) -> Result<Self> {
+        Self::build(model, Input::Chat(turns), true, effort, instructions)
+    }
+
+    // this sucks because we lose out on type safety and its verbose af
+    fn build(
+        model: &str,
+        input: Input,
+        stream: bool,
         effort: Option<EffortLevel>,
         instructions: Option<String>,
     ) -> Result<Self> {
@@ -91,60 +116,48 @@ impl OpenAIRequest {
             "gpt-4o" => Ok(Self::Gpt4o {
                 input,
                 stream,
-                previous_response_id,
                 instructions,
             }),
             "gpt-4.1" => Ok(Self::Gpt41 {
                 input,
                 stream,
-                previous_response_id,
                 instructions,
             }),
             "gpt-4.1-mini" => Ok(Self::Gpt41Mini {
                 input,
                 stream,
-                previous_response_id,
                 instructions,
             }),
             "gpt-4.1-nano" => Ok(Self::Gpt41Nano {
                 input,
                 stream,
-                previous_response_id,
                 instructions,
             }),
-            "o4-mini" => {
-                let effort =
-                    effort.ok_or_else(|| anyhow!("`o4-mini` requires a reasoning field"))?;
-                Ok(Self::O4Mini {
-                    input,
-                    stream,
-                    previous_response_id,
-                    reasoning: Reasoning::new(effort),
-                    instructions,
-                })
+            "o3" | "o3-mini" | "o4-mini" => {
+                let eff = effort.ok_or_else(|| anyhow!("model {model} requires reasoning"))?;
+                match model {
+                    "o3" => Ok(Self::O3 {
+                        input,
+                        stream,
+                        reasoning: Reasoning::new(eff),
+                        instructions,
+                    }),
+                    "o3-mini" => Ok(Self::O3Mini {
+                        input,
+                        stream,
+                        reasoning: Reasoning::new(eff),
+                        instructions,
+                    }),
+                    "o4-mini" => Ok(Self::O4Mini {
+                        input,
+                        stream,
+                        reasoning: Reasoning::new(eff),
+                        instructions,
+                    }),
+                    _ => unreachable!(),
+                }
             }
-            "o3-mini" => {
-                let effort =
-                    effort.ok_or_else(|| anyhow!("`o3-mini` requires a reasoning field"))?;
-                Ok(Self::O3Mini {
-                    input,
-                    stream,
-                    previous_response_id,
-                    reasoning: Reasoning::new(effort),
-                    instructions,
-                })
-            }
-            "o3" => {
-                let effort = effort.ok_or_else(|| anyhow!("`o3` requires a reasoning field"))?;
-                Ok(Self::O3 {
-                    input,
-                    stream,
-                    previous_response_id,
-                    reasoning: Reasoning::new(effort),
-                    instructions,
-                })
-            }
-            other => Err(anyhow!("unknown/unsupported model: {other}")),
+            other => Err(anyhow!("unknown or unsupported model: {other}")),
         }
     }
 }
@@ -209,31 +222,23 @@ struct OpenAIError {
     message: String,
 }
 
-pub struct StreamResult {
-    pub msg_id: String,
-    pub content: String,
-    pub reasoning: Option<String>,
-}
-
 pub async fn stream_openai_response(
     api_key: SecretString,
     sse_manager: Arc<SseManager>,
     user_id: String,
     chat_id: String,
-    prompt: String,
     model: String,
-    previous_response_id: Option<String>,
     reasoning: Option<EffortLevel>,
-) -> Result<Option<StreamResult>> {
+    messages: Vec<Message>,
+) -> Result<Option<super::handler::StreamResult>> {
     process_stream(
         &api_key,
         &sse_manager,
         &user_id,
         &chat_id,
-        &prompt,
         &model,
-        previous_response_id,
         reasoning,
+        &messages,
     )
     .await
 }
@@ -243,23 +248,16 @@ async fn process_stream(
     sse_manager: &SseManager,
     user_id: &str,
     chat_id: &str,
-    prompt: &str,
     model: &str,
-    previous_response_id: Option<String>,
     effort: Option<EffortLevel>,
-) -> Result<Option<StreamResult>> {
+    messages: &Vec<Message>,
+) -> Result<Option<super::handler::StreamResult>> {
     let client = Client::new();
 
     let instructions = "All code that you generate MUST be generated so that it is correctly rendered inside of a <code> block. Keep decoration in text to a minimum, just respond with clear information, in markdown format. RemarkGFM is used to help parse your output.";
+    let turns = build_turns(messages);
 
-    let request_body = OpenAIRequest::new_from_str(
-        model,
-        prompt.to_string(),
-        true,
-        previous_response_id,
-        effort,
-        Some(instructions.to_string()),
-    )?;
+    let request_body = OpenAIRequest::chat(model, turns, effort, Some(instructions.to_owned()))?;
 
     let request = client
         .post("https://api.openai.com/v1/responses")
@@ -352,7 +350,7 @@ async fn process_stream(
                                 info!(%r, "GOT FINAL REASONING");
                             }
 
-                            return Ok(Some(StreamResult {
+                            return Ok(Some(super::handler::StreamResult {
                                 msg_id: response.id,
                                 content: final_content,
                                 reasoning: reasoning_final,
@@ -437,18 +435,27 @@ async fn process_stream(
     Ok(None)
 }
 
+fn build_turns(history: &Vec<Message>) -> Vec<Turn> {
+    history
+        .iter()
+        .map(|m| Turn {
+            role: match m.role.as_str() {
+                "assistant" => "assistant".to_owned(),
+                "user" => "user".to_owned(),
+                other => other.to_owned(),
+            },
+            content: m.body.clone(),
+        })
+        .collect()
+}
+
 pub async fn generate_title(api_key: &SecretString, first_message: &str) -> Result<String> {
     let prompt = format!(
         "Summarize the following message into a short, concise title of 5 words or less, without quotation marks: \"{}\"",
         &first_message,
     );
 
-    let request_body = OpenAIRequest::Gpt41Nano {
-        input: prompt,
-        stream: false,
-        previous_response_id: None,
-        instructions: None,
-    };
+    let request_body = OpenAIRequest::prompt("gpt-4.1-nano", prompt, false, None, None)?;
 
     let client = Client::new();
 

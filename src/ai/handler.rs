@@ -15,6 +15,12 @@ use crate::{
 
 // MAJOR REFACTOR NEEDED
 
+pub struct StreamResult {
+    pub msg_id: String,
+    pub content: String,
+    pub reasoning: Option<String>,
+}
+
 pub fn spawn_title_generation_task(
     state: AppState,
     chat_id: String,
@@ -98,7 +104,7 @@ async fn generate_and_save_title(
     Ok(())
 }
 
-pub fn spawn_chat_task(state: AppState, user_id: String, args: CreateArgs) {
+pub fn spawn_chat_task(state: AppState, user_id: String, args: CreateArgs, messages: Vec<Message>) {
     let sse_manager = state.sse_manager;
 
     let mut conn = match state.db_pool.get() {
@@ -130,24 +136,6 @@ pub fn spawn_chat_task(state: AppState, user_id: String, args: CreateArgs) {
     }
 
     tracing::info!(model = %model, provider = %provider, "Using model and provider");
-
-    let messages: Vec<Message> = match state.service_container.message_service.list_for_chat(
-        &mut conn,
-        &args.chat_id,
-        &user_id,
-    ) {
-        Ok(msgs) => msgs,
-        Err(e) => {
-            tracing::error!(error = %e, "Failed to list messages for chat. Aborting AI response.");
-            return;
-        }
-    };
-
-    let previous_response_id = messages
-        .iter()
-        .rev()
-        .find(|m| m.role == "assistant")
-        .map(|m| m.id.clone());
 
     let api_key = match state
         .service_container
@@ -217,10 +205,20 @@ pub fn spawn_chat_task(state: AppState, user_id: String, args: CreateArgs) {
                     sse_manager,
                     user_id.clone(),
                     args.chat_id.clone(),
-                    args.body,
                     model,
-                    previous_response_id,
                     effort,
+                    messages,
+                )
+                .await
+            }
+            super::AiProvider::Google => {
+                super::google::stream_gemini_response(
+                    api_key,
+                    sse_manager,
+                    user_id.clone(),
+                    args.chat_id.clone(),
+                    model,
+                    messages,
                 )
                 .await
             }
@@ -256,7 +254,7 @@ pub fn spawn_chat_task(state: AppState, user_id: String, args: CreateArgs) {
                 tracing::warn!("Stream finished but did not return a message.");
             }
             Err(e) => {
-                tracing::error!(error = %e, "The OpenAI stream task failed.");
+                tracing::error!(error = %e, "The stream task failed.");
             }
         }
     });

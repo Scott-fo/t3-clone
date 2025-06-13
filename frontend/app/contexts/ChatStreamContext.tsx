@@ -52,6 +52,7 @@ export const ChatStreamProvider: React.FC<Props> = ({ children }) => {
 
   useEffect(() => {
     const handleStreamChunk = (r: Response) => {
+      console.log("GOT CHUNK", r);
       const {
         chat_id: chatId,
         chunk,
@@ -80,13 +81,13 @@ export const ChatStreamProvider: React.FC<Props> = ({ children }) => {
     const handleStreamDone = (r: Response) => {
       const { chat_id: chatId, msg_id } = r.data;
 
+      const id = msg_id ? msg_id : nanoid();
+      const now = new Date().toISOString();
+
       setPendingResponses((prevStreams) => {
         const streamToFinalize = prevStreams[chatId];
 
         if (streamToFinalize && user) {
-          const now = new Date().toISOString();
-          const id = msg_id ? msg_id : nanoid();
-
           const final_msg = {
             id,
             chat_id: chatId,
@@ -116,15 +117,18 @@ export const ChatStreamProvider: React.FC<Props> = ({ children }) => {
     const handleStreamError = (r: Response) => {
       const { chat_id: chatId, error } = r.data;
 
+      console.log("GOT STREAM ERROR", r.data);
+      const id = nanoid();
+      const now = new Date().toISOString();
+
       setPendingResponses((prevStreams) => {
         const streamWithError = prevStreams[chatId];
 
         if (streamWithError && user) {
-          const now = new Date().toISOString();
           const errorMessage = `Error: ${error}`;
 
           rep.mutate.createMessage({
-            id: `${chatId}-error-${Date.now()}`,
+            id,
             chat_id: chatId,
             role: "assistant",
             body: errorMessage,

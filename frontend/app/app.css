@@ -149,4 +149,7 @@ body {
     background-color: var(--muted-foreground);
 }
 
+@utility no-scrollbar {
+  @apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+}
 

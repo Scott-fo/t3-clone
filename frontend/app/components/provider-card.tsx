@@ -27,7 +27,8 @@ import { type ApiKey, type CreateApiKeyPayload } from "~/domain/api-key";
 import { useCreateApiKey, useDeleteApiKey } from "~/hooks/use-api-keys";
 
 type Props = {
-  provider: "openai";
+  provider: "openai" | "google";
+  placeholder: string;
   existingKey?: ApiKey;
 };
 
@@ -37,7 +38,11 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export default function ProviderCard({ provider, existingKey }: Props) {
+export default function ProviderCard({
+  provider,
+  existingKey,
+  placeholder,
+}: Props) {
   const create = useCreateApiKey();
   const del = useDeleteApiKey();
 
@@ -72,7 +77,7 @@ export default function ProviderCard({ provider, existingKey }: Props) {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <Input
             {...form.register("key")}
-            placeholder="sk-..."
+            placeholder={placeholder}
             type="password"
             disabled={create.isPending}
           />
