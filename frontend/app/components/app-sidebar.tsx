@@ -171,9 +171,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain
           pinnedChats={pinnedChats}
           historyChats={historyChats}
-          searchQuery={searchQuery}
           activeId={activeId}
-          onSearchQueryChange={setSearchQuery}
           onPinChat={handlePinChat}
           onDeleteChat={handleDeleteChat}
         />

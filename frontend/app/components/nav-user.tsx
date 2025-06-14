@@ -1,3 +1,4 @@
+import { KeyIcon } from "@heroicons/react/24/outline";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronsUpDown, LogOut, Settings } from "lucide-react";
 import { href, useNavigate } from "react-router";
@@ -75,8 +76,8 @@ export function NavUser({
           >
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => navigate(href("/settings"))}>
-                <Settings />
-                Settings
+                <KeyIcon />
+                API Keys
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
