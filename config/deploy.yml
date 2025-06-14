@@ -1,8 +1,8 @@
 # Name of your application. Used to uniquely configure containers.
-service: my-app
+service: t3-clone
 
 # Name of the container image.
-image: my-user/my-app
+image: Scott-fo/t3-clone
 
 # Deploy to these servers.
 servers:
@@ -20,7 +20,7 @@ proxy:
 # Credentials for your image host.
 registry:
   server: ghcr.io
-  username: my-user
+  username: Scott-fo 
 
   # Always use an access token rather than real password (pulled from .kamal/secrets).
   password:
@@ -29,14 +29,15 @@ registry:
 # Configure builder setup.
 builder:
   arch: amd64
+  push: true
   secrets:
     - REPLICACHE_KEY
 
 # Inject ENV variables into containers (secrets come from .kamal/secrets).
 env:
  clear:
-   APP_APPLICATION__REDIS_URL: "redis://my-app-redis:6379"
-   APP_APPLICATION__DATABASE_URL: "mysql://root:${MYSQL_ROOT_PASSWORD}@my-app-db:3306/my_app_production"
+   APP_APPLICATION__REDIS_URL: "redis://t3-clone-redis:6379"
+   APP_APPLICATION__DATABASE_URL: "mysql://root:${MYSQL_ROOT_PASSWORD}@t3-clone-db:3306/t3_clone_production"
    APP_ENVIRONMENT: production
  secret:
    - APP_APPLICATION__SECRET
@@ -50,7 +51,7 @@ accessories:
    env:
      clear:
        MYSQL_ROOT_HOST: '%'
-       MYSQL_DATABASE: "my_app_production"
+       MYSQL_DATABASE: "t3_clone_production"
      secret:
        - MYSQL_ROOT_PASSWORD
    files:
@@ -62,3 +63,13 @@ accessories:
    image: valkey/valkey:8
    directories:
      - data:/data
+
+hooks:
+  pre-deploy:
+    cmd: >
+      docker run
+      --rm
+      --network t3-clone-network
+      -e DATABASE_URL=<%= kamal.secrets.read('APP_APPLICATION__DATABASE_URL') %>
+      <%= config.builder.image %>
+      diesel migration run
