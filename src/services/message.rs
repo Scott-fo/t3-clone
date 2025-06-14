@@ -1,5 +1,5 @@
 use anyhow::{Context, Result, bail};
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use diesel::prelude::*;
 
 use crate::{
@@ -137,14 +137,19 @@ impl MessageService {
         reply: StreamResult,
         user_id: &str,
     ) -> Result<Message> {
+        // Not aesthetic, but a work around for super fast local responses from gemini / nano
+        // models
+        let now = Utc::now();
+        let safe_created = now + Duration::seconds(1);
+
         let args = CreateArgs {
             id: reply.msg_id,
             chat_id: chat_id.to_owned(),
             role: "assistant".to_owned(),
             body: reply.content,
             reasoning: reply.reasoning,
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
+            created_at: safe_created,
+            updated_at: safe_created,
         };
 
         self.create(conn, args, user_id)
@@ -157,8 +162,8 @@ impl MessageService {
         provider: AiProvider,
         user_id: &str,
     ) -> Result<Message> {
-        use chrono::{Duration, Utc};
-
+        // Not aesthetic, but a work around for super fast local responses from gemini / nano
+        // models
         let now = Utc::now();
         let safe_created = now + Duration::seconds(1);
 

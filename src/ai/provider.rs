@@ -26,9 +26,6 @@ pub enum AiProvider {
     Google,
 }
 
-pub const OPENAI_TITLE_MODEL: &str = "gpt-4.1-nano";
-pub const GOOGLE_TITLE_MODEL: &str = "gemini-2.0-flash";
-
 impl FromStr for AiProvider {
     type Err = Error;
 
