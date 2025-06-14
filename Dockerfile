@@ -1,4 +1,4 @@
-FROM rust:1.87-alpine3.20 AS builder_base
+FROM lukemathwalker/cargo-chef:latest-rust-1.87-alpine AS chef_base
 
 RUN apk add --no-cache \
       build-base \
@@ -10,16 +10,12 @@ ENV MYSQLCLIENT_STATIC=1 \
     OPENSSL_STATIC=1 \
     PKG_CONFIG_ALL_STATIC=1
 
-RUN cargo install cargo-chef
-
-WORKDIR /app
-
-FROM builder_base AS planner
+FROM chef_base AS planner
 WORKDIR /app
 COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
-FROM builder_base AS rust-builder
+FROM chef_base AS rust-builder
 ARG BIN_NAME=web
 WORKDIR /app
 
@@ -39,6 +35,11 @@ COPY frontend/package.json frontend/bun.lock ./
 RUN bun install --frozen-lockfile
 
 COPY frontend ./
+
+RUN --mount=type=secret,id=REPLICACHE_KEY \
+    echo "VITE_REPLICACHE_KEY=$(cat /run/secrets/replicache_license_key)" > .env && \
+    bun run build
+
 RUN bun run build
 
 FROM gcr.io/distroless/static-debian11:nonroot AS final
@@ -48,7 +49,7 @@ WORKDIR /app
 COPY --from=rust-builder /app/target/release/web ./bin/web
 COPY --from=frontend-builder /frontend/build/client ./frontend/build/client
 
-EXPOSE 8080
+EXPOSE 80
 USER nonroot:nonroot
 
 CMD ["/app/bin/web"]

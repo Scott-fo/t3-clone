@@ -2,6 +2,5 @@ application:
   secret: "KA/LtB0qttAYuw9zTVj/abaM8ut6szVqrYuufZ69zWWf8k8WzJd/oL8o7ro2eXlQhvGRtT3U/iqZ/5AvBlTerw=="
   host: 127.0.0.1
   port: 8080
-  base_url: "http://127.0.0.1"
   redis_url: "redis://127.0.0.1:6379"
   database_url: "mysql://user:password@127.0.0.1:3309/t3-clone"

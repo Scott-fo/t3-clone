@@ -1,5 +1,6 @@
 use axum::routing::{delete, get, post};
 use axum::{Router, middleware};
+use reqwest::StatusCode;
 use secrecy::ExposeSecret;
 use tower::ServiceBuilder;
 use tower_governor::{GovernorLayer, governor::GovernorConfigBuilder};
@@ -42,6 +43,7 @@ pub fn app_routes(app_state: AppState) -> Router {
         )));
 
     Router::new()
+        .route("/up", get(health))
         .nest("/api", protected_routes(app_state.clone()))
         .nest("/api/auth", auth_routes())
         .fallback_service(
@@ -54,6 +56,10 @@ pub fn app_routes(app_state: AppState) -> Router {
                 .layer(session_service),
         )
         .with_state(app_state)
+}
+
+async fn health() -> StatusCode {
+    StatusCode::OK
 }
 
 pub fn auth_routes() -> Router<AppState> {

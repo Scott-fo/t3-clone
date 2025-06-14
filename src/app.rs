@@ -54,7 +54,6 @@ impl Application {
 pub struct AppState {
     pub db_pool: infra::db::DbPool,
     pub cache: Pool,
-    pub base_url: Arc<ApplicationBaseUrl>,
     pub config: Arc<Settings>,
     pub service_container: Arc<ServiceContainer>,
     pub sse_manager: Arc<SseManager>,
@@ -68,7 +67,6 @@ async fn create(
     config: Settings,
 ) -> Result<(tokio::net::TcpListener, Router), anyhow::Error> {
     let config = Arc::new(config);
-    let base_url = Arc::new(ApplicationBaseUrl(config.application.base_url.clone()));
     let service_container = Arc::new(ServiceContainer::new(config.clone()));
     let sse_manager = Arc::new(SseManager::new());
     let (job_tx, job_rx) = tokio::sync::mpsc::unbounded_channel::<Job>();
@@ -76,7 +74,6 @@ async fn create(
     let app_state = AppState {
         db_pool,
         cache,
-        base_url,
         config,
         service_container,
         sse_manager,
