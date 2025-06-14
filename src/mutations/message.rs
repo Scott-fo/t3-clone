@@ -19,8 +19,6 @@ pub enum MessageMutation {
     Delete(DeleteArgs),
 }
 
-impl MessageMutation {}
-
 impl Mutation for MessageMutation {
     fn process(
         &self,
