@@ -119,6 +119,8 @@ pub async fn generate_response(
         }
     };
 
+    // If there is an error here, we should handle it rather than relying on the stream to save the
+    // errors
     let stream_res = match setup.provider {
         AiProvider::OpenAi => {
             openai::handler::stream(
