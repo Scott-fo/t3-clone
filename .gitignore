@@ -1,3 +1,4 @@
 /target
 .env
 .replicache.key
+config/deploy.yml
