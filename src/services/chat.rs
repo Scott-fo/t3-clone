@@ -6,6 +6,7 @@ use crate::{
     repositories::{Repository, chat::ChatRepository, message::MessageRepository},
 };
 use anyhow::{Context, Result, bail};
+use chrono::Utc;
 use diesel::prelude::*;
 
 #[derive(Debug, Clone)]
@@ -201,5 +202,33 @@ impl ChatService {
             .collect();
 
         Ok(result)
+    }
+
+    pub fn update_title(
+        &self,
+        conn: &mut MysqlConnection,
+        chat_id: &str,
+        new_title: &str,
+        user_id: &str,
+    ) -> Result<Chat> {
+        conn.transaction(|conn| {
+            let existing = self
+                .repository
+                .find_by_id_for_update(conn, chat_id)?
+                .ok_or_else(|| anyhow::anyhow!(format!("Failed to find chat: {}", chat_id)))?;
+
+            self.check_ownership(conn, chat_id, user_id)?;
+
+            let changeset = Changeset {
+                title: Some(new_title.to_owned()),
+                pinned: None,
+                pinned_at: None,
+                archived: None,
+                version: existing.version + 1,
+                updated_at: Utc::now().naive_utc(),
+            };
+
+            self.repository.update(conn, chat_id, changeset)
+        })
     }
 }

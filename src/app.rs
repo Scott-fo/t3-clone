@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use crate::configuration::Settings;
 use crate::infra;
+use crate::jobs::{Job, run_worker};
 use crate::routes::app_routes;
 use crate::services::container::ServiceContainer;
 use crate::services::sse_manager::SseManager;
@@ -57,6 +58,7 @@ pub struct AppState {
     pub config: Arc<Settings>,
     pub service_container: Arc<ServiceContainer>,
     pub sse_manager: Arc<SseManager>,
+    pub job_tx: tokio::sync::mpsc::UnboundedSender<Job>,
 }
 
 async fn create(
@@ -69,6 +71,7 @@ async fn create(
     let base_url = Arc::new(ApplicationBaseUrl(config.application.base_url.clone()));
     let service_container = Arc::new(ServiceContainer::new(config.clone()));
     let sse_manager = Arc::new(SseManager::new());
+    let (job_tx, job_rx) = tokio::sync::mpsc::unbounded_channel::<Job>();
 
     let app_state = AppState {
         db_pool,
@@ -77,7 +80,13 @@ async fn create(
         config,
         service_container,
         sse_manager,
+        job_tx: job_tx.clone(),
     };
+
+    let worker_state = app_state.clone();
+    tokio::spawn(async move {
+        run_worker(worker_state, job_rx).await;
+    });
 
     let app = app_routes(app_state);
 

@@ -36,6 +36,16 @@ impl ApiKeyService {
         ApiKeyRepository::list_for_user(conn, user_id)
     }
 
+    pub fn get_and_decrypt(
+        &self,
+        conn: &mut MysqlConnection,
+        user_id: &str,
+        provider: &str,
+    ) -> Result<SecretString> {
+        self.get_for_provider(conn, user_id, provider)
+            .and_then(|key| self.decrypt(key))
+    }
+
     pub fn get_for_provider(
         &self,
         conn: &mut MysqlConnection,

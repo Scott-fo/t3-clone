@@ -7,6 +7,7 @@ mod auth;
 mod dtos;
 mod handlers;
 mod infra;
+mod jobs;
 mod middleware;
 mod models;
 mod mutations;

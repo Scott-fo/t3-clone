@@ -14,6 +14,8 @@ use crate::{
     services::sse_manager::{EventType, SseManager, SseMessage},
 };
 
+use super::handler::create_title_prompt;
+
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub enum GeminiModel {
     #[serde(rename = "gemini-2.5-pro-preview-06-05")]
@@ -275,4 +277,54 @@ async fn process_stream(
         content: full_text,
         reasoning: None,
     }))
+}
+
+pub async fn generate_title(
+    api_key: &SecretString,
+    first_message: &str,
+    model: &str,
+) -> Result<String> {
+    let req_body = GeminiRequest {
+        contents: vec![GeminiMessage {
+            role: Some("user".into()),
+            parts: vec![GeminiPart {
+                text: create_title_prompt(first_message),
+            }],
+        }],
+    };
+
+    let url = format!(
+        "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
+        model,
+        api_key.expose_secret()
+    );
+
+    let payload: GeminiSsePayload = Client::new()
+        .post(&url)
+        .header("Content-Type", "application/json")
+        .json(&req_body)
+        .send()
+        .await
+        .context("Google title request failed")?
+        .error_for_status()
+        .context("Google title request returned error")?
+        .json()
+        .await
+        .context("Google title JSON decode failed")?;
+
+    let title = payload
+        .candidates
+        .into_iter()
+        .flat_map(|c| c.content)
+        .flat_map(|c| c.parts)
+        .filter_map(|p| p.text)
+        .collect::<String>()
+        .trim()
+        .to_owned();
+
+    if title.is_empty() {
+        Err(anyhow!("Google API returned empty title"))
+    } else {
+        Ok(title)
+    }
 }

@@ -13,9 +13,10 @@ use crate::{
     services::sse_manager::{EventType, SseManager, SseMessage},
 };
 
-use super::reasoning::{EffortLevel, Reasoning};
-
-// MAJOR REFACTOR NEEDED
+use super::{
+    handler::create_title_prompt,
+    reasoning::{EffortLevel, Reasoning},
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Turn {
@@ -165,9 +166,6 @@ impl OpenAIRequest {
 #[derive(Deserialize, Debug)]
 #[serde(tag = "type")]
 enum StreamEvent {
-    #[serde(rename = "response.in_progress")]
-    ResponseInProgress { response: ResponseObject },
-
     #[serde(rename = "response.completed")]
     ResponseCompleted { response: ResponseObject },
 
@@ -175,10 +173,10 @@ enum StreamEvent {
     ResponseFailed { response: ResponseObject },
 
     #[serde(rename = "response.output_text.delta")]
-    ResponseOutputTextDelta { item_id: String, delta: String },
+    ResponseOutputTextDelta { delta: String },
 
     #[serde(rename = "response.reasoning_summary_text.delta")]
-    ResponseReasoningSummaryTextDelta { item_id: String, delta: String },
+    ResponseReasoningSummaryTextDelta { delta: String },
 
     #[serde(other)]
     Unknown,
@@ -283,7 +281,7 @@ async fn process_stream(
                 };
 
                 match event {
-                    StreamEvent::ResponseOutputTextDelta { item_id, delta } => {
+                    StreamEvent::ResponseOutputTextDelta { delta } => {
                         let chunk_payload = json!({
                             "chat_id": chat_id,
                             "chunk": delta,
@@ -381,7 +379,7 @@ async fn process_stream(
                         return Err(anyhow!("OpenAI failed: {}", error_msg));
                     }
 
-                    StreamEvent::ResponseReasoningSummaryTextDelta { item_id: _, delta } => {
+                    StreamEvent::ResponseReasoningSummaryTextDelta { delta } => {
                         let chunk_payload = json!({
                             "chat_id": chat_id,
                             "reasoning": delta,
@@ -401,7 +399,6 @@ async fn process_stream(
                             Some(format!("{}{}", reasoning_final.unwrap_or_default(), delta));
                     }
 
-                    StreamEvent::ResponseInProgress { .. } => { /* Do nothing */ }
                     StreamEvent::Unknown => {
                         warn!(data, "Received an unknown event type from OpenAI.");
                     }
@@ -449,13 +446,13 @@ fn build_turns(history: &Vec<Message>) -> Vec<Turn> {
         .collect()
 }
 
-pub async fn generate_title(api_key: &SecretString, first_message: &str) -> Result<String> {
-    let prompt = format!(
-        "Summarize the following message into a short, concise title of 5 words or less, without quotation marks: \"{}\"",
-        &first_message,
-    );
-
-    let request_body = OpenAIRequest::prompt("gpt-4.1-nano", prompt, false, None, None)?;
+pub async fn generate_title(
+    api_key: &SecretString,
+    first_message: &str,
+    model: &str,
+) -> Result<String> {
+    let request_body =
+        OpenAIRequest::prompt(model, create_title_prompt(first_message), false, None, None)?;
 
     let client = Client::new();
 

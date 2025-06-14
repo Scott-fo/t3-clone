@@ -1,7 +1,9 @@
 use anyhow::{Context, Result, bail};
+use chrono::Utc;
 use diesel::prelude::*;
 
 use crate::{
+    ai::{handler::StreamResult, provider::AiProvider},
     models::message::{Changeset, CreateArgs, Message, UpdateArgs},
     repositories::{Repository, chat::ChatRepository, message::MessageRepository},
 };
@@ -126,5 +128,50 @@ impl MessageService {
         }
 
         self.message_repo.find_by_chat(conn, chat_id)
+    }
+
+    pub fn save_assistant_reply(
+        &self,
+        conn: &mut MysqlConnection,
+        chat_id: &str,
+        reply: StreamResult,
+        user_id: &str,
+    ) -> Result<Message> {
+        let args = CreateArgs {
+            id: reply.msg_id,
+            chat_id: chat_id.to_owned(),
+            role: "assistant".to_owned(),
+            body: reply.content,
+            reasoning: reply.reasoning,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        self.create(conn, args, user_id)
+    }
+
+    pub fn save_assistant_error(
+        &self,
+        conn: &mut MysqlConnection,
+        chat_id: &str,
+        provider: AiProvider,
+        user_id: &str,
+    ) -> Result<Message> {
+        use chrono::{Duration, Utc};
+
+        let now = Utc::now();
+        let safe_created = now + Duration::seconds(1);
+
+        let args = CreateArgs {
+            id: uuid::Uuid::new_v4().to_string(),
+            chat_id: chat_id.to_owned(),
+            role: "assistant".into(),
+            body: format!("Error: Missing API key for {}", provider),
+            reasoning: None,
+            created_at: safe_created,
+            updated_at: safe_created,
+        };
+
+        self.create(conn, args, user_id)
     }
 }

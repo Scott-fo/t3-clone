@@ -2514,6 +2514,7 @@ dependencies = [
  "serde-aux",
  "serde_json",
  "sha2",
+ "thiserror 2.0.12",
  "tokio",
  "tokio-retry2",
  "tokio-stream",

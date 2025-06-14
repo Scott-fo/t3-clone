@@ -36,32 +36,19 @@ impl Mutation for MessageMutation {
                         .message_service
                         .create(conn, args.clone(), user_id)?;
 
-                // can move this away to be much cleaner.
                 if args.role == "user" {
                     let messages = state.service_container.message_service.list_for_chat(
                         conn,
                         &args.chat_id,
                         user_id,
                     )?;
-
-                    if messages.len() == 1 {
-                        tracing::info!(
-                            "First message detected in chat {}. Spawning title generation task.",
-                            args.chat_id
-                        );
-                        ai::handler::spawn_title_generation_task(
-                            state.clone(),
-                            args.chat_id.clone(),
-                            args.body.clone(),
-                            user_id.to_string(),
-                        );
-                    }
-                    ai::handler::spawn_chat_task(
-                        state,
+                    ai::handler::enqueue_ai_jobs(
+                        &state,
                         user_id.to_string(),
-                        args.to_owned(),
+                        args.chat_id.clone(),
+                        args.body.clone(),
                         messages,
-                    );
+                    )?;
                 }
 
                 Ok(Some(msg.id))
