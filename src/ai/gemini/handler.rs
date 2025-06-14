@@ -76,6 +76,7 @@ pub async fn stream(
                     full_text.push_str(&delta);
                     send_text_delta(&sse, &user_id, &chat_id, &delta).await;
                 }
+
                 if stop {
                     break;
                 }
