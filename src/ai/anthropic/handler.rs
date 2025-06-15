@@ -8,6 +8,7 @@ use reqwest::{
 };
 use reqwest_eventsource::{Event, EventSource};
 use secrecy::{ExposeSecret, SecretString};
+use serde::Deserialize;
 use serde_json::Value;
 use tracing::info;
 use uuid::Uuid;
@@ -21,6 +22,20 @@ use crate::{
 
 const BASE: &str = "https://api.anthropic.com/v1/messages";
 const VERSION: &str = "2023-06-01";
+
+#[derive(Debug, serde::Deserialize)]
+pub struct Response {
+    pub id: String,
+    #[serde(rename = "type")]
+    pub kind: String,
+    pub role: String,
+    pub model: String,
+
+    pub content: Vec<ContentBlock>,
+    pub stop_reason: Option<String>,
+    pub stop_sequence: Option<String>,
+    pub usage: Usage,
+}
 
 pub async fn generate_title(
     api_key: &SecretString,
@@ -37,7 +52,7 @@ pub async fn generate_title(
     headers.insert("anthropic-version", HeaderValue::from_static(VERSION));
 
     let client = Client::new();
-    let resp: Value = client
+    let resp: Response = client
         .post(BASE)
         .headers(headers)
         .json(&req)
@@ -47,10 +62,62 @@ pub async fn generate_title(
         .json()
         .await?;
 
-    let text = resp["content"][0]["text"]
-        .as_str()
-        .context("bad anthropic response")?;
-    Ok(text.trim().to_owned())
+    let text_block = resp
+        .content
+        .iter()
+        .find(|b| b.kind == "text")
+        .context("no text block in claude response")?;
+
+    Ok(text_block.text.trim().to_owned())
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TextDelta {
+    pub text: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Usage {
+    pub output_tokens: Option<u32>,
+    pub input_tokens: Option<u32>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MessageHeader {
+    pub id: String,
+    pub role: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ContentBlock {
+    #[serde(rename = "type")]
+    pub kind: String,
+    pub text: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum StreamEvent {
+    MessageStart {
+        message: MessageHeader,
+    },
+    ContentBlockStart {
+        index: usize,
+        content_block: ContentBlock,
+    },
+    Ping,
+    ContentBlockDelta {
+        index: usize,
+        delta: TextDelta,
+    },
+    ContentBlockStop {
+        index: usize,
+    },
+    MessageDelta {
+        delta: Value,
+        usage: Option<Usage>,
+    },
+    MessageStop,
 }
 
 pub async fn stream(
@@ -86,15 +153,16 @@ pub async fn stream(
                     continue;
                 }
 
-                let v: Value = serde_json::from_str(&msg.data)?;
-                match v["type"].as_str() {
-                    Some("content_block_delta") => {
-                        if let Some(t) = v["delta"]["text"].as_str() {
-                            send_text_delta(&sse, &user_id, &chat_id, t).await;
-                            full_text.push_str(t);
+                let evt: StreamEvent = serde_json::from_str(&msg.data)?;
+                match evt {
+                    StreamEvent::ContentBlockDelta { delta, .. } => {
+                        if !delta.text.is_empty() {
+                            send_text_delta(&sse, &user_id, &chat_id, &delta.text).await;
+                            full_text.push_str(&delta.text);
                         }
                     }
-                    Some("message_stop") => break,
+                    StreamEvent::MessageStop => break,
+                    StreamEvent::Ping => {}
                     _ => {}
                 }
             }
