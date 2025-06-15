@@ -36,11 +36,12 @@ builder:
 env:
  clear:
    APP_APPLICATION__REDIS_URL: "redis://my-app-redis:6379"
-   APP_APPLICATION__DATABASE_URL: "mysql://app:superpass@my-app-db:3306/myapp_production"
+   APP_APPLICATION__DATABASE_URL: |
+     mysql://app:$MYSQL_PASSWORD@myapp-db:3306/myapp_production
    APP_ENVIRONMENT: production
  secret:
    - APP_APPLICATION__SECRET
-   - MYSQL_ROOT_PASSWORD
+   - MYSQL_PASSWORD
 
 
 # Use accessory services (secrets come from .kamal/secrets).
@@ -48,22 +49,20 @@ accessories:
  db:
    image: mysql:8.0
    host: 192.168.0.1
-   port: 192.168.0.1:3306:3306
    files:
       - config/mysql_native.cnf:/etc/mysql/conf.d/auth.cnf:ro
    env:
      clear:
-       MYSQL_ROOT_HOST: '%'
+       MYSQL_ROOT_HOST: '127.0.0.1'
        MYSQL_DATABASE: "myapp_production"
        MYSQL_USER: app
      secret:
-       - MYSQL_ROOT_PASSWORD
        - MYSQL_PASSWORD
+       - MYSQL_ROOT_PASSWORD
    directories:
-     - data:/var/lib/mysql
+     - mysql-data:/var/lib/mysql
  redis:
    image: valkey/valkey:8
    host: 192.168.0.1
-   port: 192.168.0.1:6379:6379
    directories:
-     - data:/data
+     - redis-data:/data
