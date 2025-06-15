@@ -1,4 +1,4 @@
-import { href, Link } from "react-router";
+import { href, Link, useNavigate } from "react-router";
 import { Loader2, Pin, PinOff, SplitIcon, Trash2 } from "lucide-react";
 import { SidebarMenuButton, SidebarMenuItem } from "~/components/ui/sidebar";
 import { Button } from "~/components/ui/button";
@@ -7,6 +7,17 @@ import type { Chat } from "~/domain/chat";
 import { useChatStream } from "~/contexts/ChatStreamContext";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Badge } from "./ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
 
 interface ChatItemProps {
   item: Chat;
@@ -23,6 +34,7 @@ export function ChatItem({
   pinIndex,
   onDelete,
 }: ChatItemProps) {
+  const navigate = useNavigate();
   const { pendingResponses } = useChatStream();
   const isPending = !!pendingResponses[item.id];
 
@@ -36,6 +48,7 @@ export function ChatItem({
     e.stopPropagation();
     e.preventDefault();
     onDelete(item.id);
+    navigate(href("/"));
   };
 
   // can't get the tooltip to work on sidebarmenu button, so ill just wrap it
@@ -97,22 +110,42 @@ export function ChatItem({
               </TooltipContent>
             </TooltipPrimitive.Root>
             <TooltipPrimitive.Root>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 hover:bg-destructive/80 hover:text-white pointer-events-auto"
-                  onClick={handleDeleteClick}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent
-                side="top"
-                className="bg-destructive/80 text-white fill-destructive/80"
-              >
-                Delete chat
-              </TooltipContent>
+              <AlertDialog>
+                <AlertDialogTrigger>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 hover:bg-destructive/80 hover:text-white pointer-events-auto"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="top"
+                    className="bg-destructive/80 text-white fill-destructive/80"
+                  >
+                    Delete chat
+                  </TooltipContent>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Are you absolutely sure?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete
+                      this chat.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteClick}>
+                      Confirm
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </TooltipPrimitive.Root>
           </>
         )}
