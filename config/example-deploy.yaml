@@ -40,7 +40,6 @@ env:
  secret:
    - APP_APPLICATION__DATABASE_URL
    - APP_APPLICATION__SECRET
-   - MYSQL_PASSWORD
 
 
 # Use accessory services (secrets come from .kamal/secrets).
