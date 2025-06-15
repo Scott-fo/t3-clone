@@ -27,7 +27,7 @@ import { type ApiKey, type CreateApiKeyPayload } from "~/domain/api-key";
 import { useCreateApiKey, useDeleteApiKey } from "~/hooks/use-api-keys";
 
 type Props = {
-  provider: "openai" | "google";
+  provider: "openai" | "google" | "anthropic";
   placeholder: string;
   existingKey?: ApiKey;
 };

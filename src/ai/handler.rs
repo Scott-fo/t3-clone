@@ -10,6 +10,7 @@ use crate::{
 };
 
 use super::{
+    anthropic::{self, model::AnthropicModel},
     gemini::{self, model::GeminiModel},
     openai::{self, model::OpenAiModel},
 };
@@ -70,6 +71,10 @@ pub async fn generate_title(
         }
         AiProvider::Google => {
             gemini::handler::generate_title(&api_key, &first_body, GeminiModel::Flash20).await?
+        }
+        AiProvider::Anthropic => {
+            anthropic::handler::generate_title(&api_key, &first_body, AnthropicModel::Haiku35)
+                .await?
         }
     };
 
@@ -136,6 +141,17 @@ pub async fn generate_response(
         }
         AiProvider::Google => {
             gemini::handler::stream(
+                setup.api_key,
+                state.sse_manager.clone(),
+                user_id.clone(),
+                chat_id.clone(),
+                setup.model.parse()?,
+                messages.clone(),
+            )
+            .await?
+        }
+        AiProvider::Anthropic => {
+            anthropic::handler::stream(
                 setup.api_key,
                 state.sse_manager.clone(),
                 user_id.clone(),

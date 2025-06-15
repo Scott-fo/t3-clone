@@ -1,5 +1,6 @@
 import OpenAI from "~/logos/openai-black.svg?react";
 import Gemini from "~/logos/gemini.svg?react";
+import Anthropic from "~/logos/anthropic.svg?react";
 
 export type Reasoning = "high" | "medium" | "low";
 
@@ -70,6 +71,27 @@ export const supportedModels: SupportedModels[] = [
       {
         model: "gemini-2.0-flash",
         display: "Gemini 2.0 Flash",
+        reasoning: false,
+      },
+    ],
+  },
+  {
+    provider: "anthropic",
+    logo: Anthropic,
+    models: [
+      {
+        model: "claude-3-5-haiku-latest",
+        display: "Claude 3.5 Haiku",
+        reasoning: false,
+      },
+      {
+        model: "claude-sonnet-4-20250514",
+        display: "Claude Sonnet 4",
+        reasoning: false,
+      },
+      {
+        model: "claude-opus-4-20250514",
+        display: "Claude Opus 4",
         reasoning: false,
       },
     ],

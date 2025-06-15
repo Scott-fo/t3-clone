@@ -24,6 +24,7 @@ pub type ProviderResult<T> = std::result::Result<T, ProviderError>;
 pub enum AiProvider {
     OpenAi,
     Google,
+    Anthropic,
 }
 
 impl FromStr for AiProvider {
@@ -33,6 +34,7 @@ impl FromStr for AiProvider {
         match s {
             "openai" => Ok(Self::OpenAi),
             "google" => Ok(Self::Google),
+            "anthropic" => Ok(Self::Anthropic),
             _ => bail!("Invalid AI provider: '{}'", s),
         }
     }
@@ -43,6 +45,7 @@ impl std::fmt::Display for AiProvider {
         match self {
             AiProvider::OpenAi => write!(f, "openai"),
             AiProvider::Google => write!(f, "google"),
+            AiProvider::Anthropic => write!(f, "anthropic"),
         }
     }
 }
