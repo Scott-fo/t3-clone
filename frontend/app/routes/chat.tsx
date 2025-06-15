@@ -139,7 +139,7 @@ export default function Page({ params }: Route.ComponentProps) {
       />
       <div
         ref={containerRef}
-        className="z-10 flex-1 overflow-y-auto overflow-x-none px-4 py-4 space-y-2 sm:space-y-2 mt-10 custom-scrollbar"
+        className="z-10 flex-1 overflow-y-auto overflow-x-none px-4 py-4 space-y-2 mt-2 custom-scrollbar"
       >
         {showMessages && <MessageList messages={messages} />}
         {showMessages && isPending && (

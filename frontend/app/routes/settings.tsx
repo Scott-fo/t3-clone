@@ -1,18 +1,20 @@
 import ProviderCard from "~/components/provider-card";
 import { SidebarTrigger, useSidebar } from "~/components/ui/sidebar";
-import { useApiKeys } from "~/hooks/use-api-keys";
 import { cn } from "~/lib/utils";
+import { useConnectedProviderStore } from "~/stores/connected-provider";
 
 export default function Page() {
   const sidebar = useSidebar();
-  const { data, error } = useApiKeys();
+  const connectedProviders = useConnectedProviderStore((state) => state.data);
 
-  const openaiKey = data?.find((k) => k.provider === "openai");
-  const googleKey = data?.find((k) => k.provider === "google");
-  const anthropicKey = data?.find((k) => k.provider === "anthropic");
-  const openRouterKey = data?.find((k) => k.provider === "openrouter");
-
-  if (error) return <p className="text-red-600">{error.message}</p>;
+  const openaiKey = connectedProviders?.find((k) => k.provider === "openai");
+  const googleKey = connectedProviders?.find((k) => k.provider === "google");
+  const anthropicKey = connectedProviders?.find(
+    (k) => k.provider === "anthropic"
+  );
+  const openRouterKey = connectedProviders?.find(
+    (k) => k.provider === "openrouter"
+  );
 
   return (
     <div className="h-full max-h-screen max-w-3xl h-screen w-full mx-auto flex flex-col overflow-hidden">

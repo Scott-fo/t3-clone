@@ -1,6 +1,6 @@
 import { KeyIcon } from "@heroicons/react/24/outline";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronsUpDown, LogOut, Settings } from "lucide-react";
+import { ChevronsUpDown, LogOut } from "lucide-react";
 import { href, useNavigate } from "react-router";
 import { dropAllDatabases } from "replicache";
 
@@ -21,6 +21,7 @@ import {
 } from "~/components/ui/sidebar";
 import { useReplicache } from "~/contexts/ReplicacheContext";
 import { api } from "~/lib/api";
+import { useConnectedProviderStore } from "~/stores/connected-provider";
 import { useUserStore } from "~/stores/user";
 
 export function NavUser({
@@ -35,7 +36,10 @@ export function NavUser({
   const rep = useReplicache();
   const navigate = useNavigate();
 
-  const clear = useUserStore((state) => state.clear);
+  const clearUser = useUserStore((state) => state.clear);
+  const clearConnectedProviders = useConnectedProviderStore(
+    (state) => state.clear
+  );
 
   const logoutMutation = useMutation({
     mutationFn: () => api.post("/api/logout"),
@@ -43,7 +47,8 @@ export function NavUser({
       queryClient.clear();
       rep.close();
       dropAllDatabases();
-      clear();
+      clearUser();
+      clearConnectedProviders();
       navigate("/login", { replace: true });
     },
   });

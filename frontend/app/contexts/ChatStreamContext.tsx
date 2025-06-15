@@ -52,7 +52,6 @@ export const ChatStreamProvider: React.FC<Props> = ({ children }) => {
 
   useEffect(() => {
     const handleStreamChunk = (r: Response) => {
-      console.log("GOT CHUNK", r);
       const {
         chat_id: chatId,
         chunk,
@@ -117,7 +116,7 @@ export const ChatStreamProvider: React.FC<Props> = ({ children }) => {
     const handleStreamError = (r: Response) => {
       const { chat_id: chatId, error } = r.data;
 
-      console.log("GOT STREAM ERROR", r.data);
+      console.error("GOT STREAM ERROR", r.data);
       const id = nanoid();
       const now = new Date().toISOString();
 

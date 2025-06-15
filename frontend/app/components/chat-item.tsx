@@ -111,8 +111,8 @@ export function ChatItem({
             </TooltipPrimitive.Root>
             <TooltipPrimitive.Root>
               <AlertDialog>
-                <AlertDialogTrigger>
-                  <TooltipTrigger asChild>
+                <TooltipTrigger asChild>
+                  <AlertDialogTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -120,14 +120,14 @@ export function ChatItem({
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side="top"
-                    className="bg-destructive/80 text-white fill-destructive/80"
-                  >
-                    Delete chat
-                  </TooltipContent>
-                </AlertDialogTrigger>
+                  </AlertDialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  className="bg-destructive/80 text-white fill-destructive/80"
+                >
+                  Delete chat
+                </TooltipContent>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>

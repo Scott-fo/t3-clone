@@ -24,7 +24,6 @@ import { useReplicache } from "~/contexts/ReplicacheContext";
 import { toast } from "sonner";
 import { CommandMenu } from "./chat-menu";
 import { Input } from "./ui/input";
-import { useApiKeys } from "~/hooks/use-api-keys";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
+import { useConnectedProviderStore } from "~/stores/connected-provider";
 
 export const MAX_PINNED_CHATS = 9;
 
@@ -40,7 +40,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate();
   const rep = useReplicache();
   const activeId = useParams()?.thread_id ?? "";
-  const { data: apiKeys, isLoading: areApiKeysLoading } = useApiKeys();
+
+  const connectedProviders = useConnectedProviderStore((state) => state.data);
+  const areConnectedProvidersLoading = useConnectedProviderStore(
+    (state) => state.loading
+  );
 
   const allChats = useChatStore((state) => state.data);
   const user = useUserStore((state) => state.data);
@@ -52,12 +56,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [isApiKeysDialogOpen, setIsApiKeysDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (!areApiKeysLoading && (!apiKeys || apiKeys.length === 0)) {
+    if (
+      !areConnectedProvidersLoading &&
+      (!connectedProviders || connectedProviders.length === 0)
+    ) {
       setIsApiKeysDialogOpen(true);
     } else {
       setIsApiKeysDialogOpen(false);
     }
-  }, [apiKeys, areApiKeysLoading]);
+  }, [connectedProviders, areConnectedProvidersLoading]);
 
   const visibleChats = useMemo(
     () => allChats.filter((chat) => !chat.archived),

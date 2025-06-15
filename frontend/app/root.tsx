@@ -12,6 +12,7 @@ import "./app.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useUser } from "./hooks/user";
 import { Toaster } from "./components/ui/sonner";
+import { useConnectedProviders } from "./hooks/use-api-keys";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -58,6 +59,8 @@ export default function App() {
 function Inner() {
   // Start syncing user. Don't love this aesthetic, but it works quite well
   useUser();
+  useConnectedProviders();
+
   return <Outlet />;
 }
 

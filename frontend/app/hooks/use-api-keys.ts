@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import type { ApiKey, CreateApiKeyPayload } from "~/domain/api-key";
+import { useConnectedProviderStore } from "~/stores/connected-provider";
 
 function handle<T>(p: Promise<{ data: T }>): Promise<T> {
   return p
@@ -28,10 +29,21 @@ const Keys = {
   all: ["apiKeys"] as const,
 };
 
-export function useApiKeys() {
+export function useConnectedProviders() {
+  const setLoading = useConnectedProviderStore((state) => state.setLoading);
+  const setConnectedProviders = useConnectedProviderStore(
+    (state) => state.setData
+  );
+
   return useQuery<ApiKey[], Error>({
     queryKey: Keys.all,
-    queryFn: apiKeys.list,
+    queryFn: async () => {
+      const res = await apiKeys.list();
+      setConnectedProviders(res);
+      setLoading(false);
+
+      return res;
+    },
     staleTime: Infinity,
   });
 }

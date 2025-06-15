@@ -55,7 +55,7 @@ export default function Page() {
           sidebar.open && !sidebar.isMobile && "opacity-0"
         )}
       />
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-10 custom-scrollbar"></div>
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2 mt-2 custom-scrollbar"></div>
       <div className="w-full max-w-3xl mx-auto shrink-0 pt-2">
         <div className="relative">
           <div
