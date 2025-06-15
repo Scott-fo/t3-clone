@@ -52,7 +52,7 @@ export default function Page() {
         variant="secondary"
         className={cn(
           `z-50 absolute opacity-100 top-3 left-3 transition-opacity duration-200`,
-          sidebar.open && sidebar.isMobile && "opacity-0"
+          sidebar.open && !sidebar.isMobile && "opacity-0"
         )}
       />
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-10 custom-scrollbar"></div>
