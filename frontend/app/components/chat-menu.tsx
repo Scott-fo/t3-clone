@@ -31,7 +31,7 @@ export function CommandMenu({ open, setOpen, chats }: Props) {
                 setOpen(false);
               }}
             >
-              {c.title}
+              {c.title ?? "New chat"}
             </CommandItem>
           ))}
         </CommandGroup>
