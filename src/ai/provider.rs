@@ -25,6 +25,7 @@ pub enum AiProvider {
     OpenAi,
     Google,
     Anthropic,
+    OpenRouter,
 }
 
 impl FromStr for AiProvider {
@@ -35,6 +36,7 @@ impl FromStr for AiProvider {
             "openai" => Ok(Self::OpenAi),
             "google" => Ok(Self::Google),
             "anthropic" => Ok(Self::Anthropic),
+            "openrouter" => Ok(Self::OpenRouter),
             _ => bail!("Invalid AI provider: '{}'", s),
         }
     }
@@ -46,6 +48,7 @@ impl std::fmt::Display for AiProvider {
             AiProvider::OpenAi => write!(f, "openai"),
             AiProvider::Google => write!(f, "google"),
             AiProvider::Anthropic => write!(f, "anthropic"),
+            AiProvider::OpenRouter => write!(f, "openrouter"),
         }
     }
 }

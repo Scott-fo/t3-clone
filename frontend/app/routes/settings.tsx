@@ -10,6 +10,7 @@ export default function Page() {
   const openaiKey = data?.find((k) => k.provider === "openai");
   const googleKey = data?.find((k) => k.provider === "google");
   const anthropicKey = data?.find((k) => k.provider === "anthropic");
+  const openRouterKey = data?.find((k) => k.provider === "openrouter");
 
   if (error) return <p className="text-red-600">{error.message}</p>;
 
@@ -42,6 +43,11 @@ export default function Page() {
         <ProviderCard
           provider="anthropic"
           existingKey={anthropicKey}
+          placeholder="sk-..."
+        />
+        <ProviderCard
+          provider="openrouter"
+          existingKey={openRouterKey}
           placeholder="sk-..."
         />
       </div>

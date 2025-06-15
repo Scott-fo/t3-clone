@@ -1,6 +1,7 @@
 import OpenAI from "~/logos/openai-black.svg?react";
 import Gemini from "~/logos/gemini.svg?react";
 import Anthropic from "~/logos/anthropic.svg?react";
+import OpenRouter from "~/logos/openrouter.svg?react";
 
 export type Reasoning = "high" | "medium" | "low";
 
@@ -92,6 +93,22 @@ export const supportedModels: SupportedModels[] = [
       {
         model: "claude-opus-4-20250514",
         display: "Claude Opus 4",
+        reasoning: false,
+      },
+    ],
+  },
+  {
+    provider: "openrouter",
+    logo: OpenRouter,
+    models: [
+      {
+        model: "deepseek/deepseek-r1-0528-qwen3-8b:free",
+        display: "DeepSeek R1 8b (OpenRouter)",
+        reasoning: false,
+      },
+      {
+        model: "google/gemini-2.0-flash-exp:free",
+        display: "Gemini 2.0 Flash (OpenRouter)",
         reasoning: false,
       },
     ],
