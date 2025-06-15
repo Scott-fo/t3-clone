@@ -129,7 +129,7 @@ export default function Page({ params }: Route.ComponentProps) {
   );
 
   return (
-    <div className="relative h-full max-h-screen h-screen w-full mx-auto flex flex-col overflow-hidden">
+    <div className="relative h-dvh w-full mx-auto flex flex-col overflow-hidden">
       <SidebarTrigger
         variant="secondary"
         className={cn(
@@ -139,7 +139,7 @@ export default function Page({ params }: Route.ComponentProps) {
       />
       <div
         ref={containerRef}
-        className="z-10 flex-1 overflow-y-auto overflow-x-none px-4 py-4 space-y-10 custom-scrollbar"
+        className="z-10 flex-1 overflow-y-auto overflow-x-none px-4 py-4 space-y-2 sm:space-y-2 mt-10 custom-scrollbar"
       >
         {showMessages && <MessageList messages={messages} />}
         {showMessages && isPending && (
