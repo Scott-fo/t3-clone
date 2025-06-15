@@ -8,8 +8,9 @@ Prioritised features that I use and care about.
 
 ## Todo:
 - Sharable Chats
-- Attachments
 - More control via settings page
+- Attachments
+- Image gen
 
 ## Deployment (VPS)
 Setup to be super easy to deploy your own. I have this running on the cheapest Hetzner instance. Handling DB, Redis, and the app.
