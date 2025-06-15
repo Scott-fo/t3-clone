@@ -263,6 +263,25 @@ const AssistantMessageContent = memo(
             ol: ({ node, ...props }) => (
               <ol {...props} className="m-0 p-0 leading-snug" />
             ),
+            table: ({ node, ...props }) => (
+              <div className="overflow-x-auto">
+                <table {...props} className="my-4 w-full border-collapse" />
+              </div>
+            ),
+            thead: ({ node, ...props }) => <thead {...props} />,
+            tbody: ({ node, ...props }) => <tbody {...props} />,
+            tr: ({ node, ...props }) => (
+              <tr {...props} className="border-b even:bg-muted/50" />
+            ),
+            th: ({ node, ...props }) => (
+              <th
+                {...props}
+                className="p-2 text-left font-semibold border border-border"
+              />
+            ),
+            td: ({ node, ...props }) => (
+              <td {...props} className="p-2 border border-border" />
+            ),
           }}
         >
           {msg}
