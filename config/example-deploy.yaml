@@ -36,10 +36,9 @@ builder:
 env:
  clear:
    APP_APPLICATION__REDIS_URL: "redis://my-app-redis:6379"
-   APP_APPLICATION__DATABASE_URL: |
-     mysql://app:$MYSQL_PASSWORD@myapp-db:3306/myapp_production
    APP_ENVIRONMENT: production
  secret:
+   - APP_APPLICATION__DATABASE_URL
    - APP_APPLICATION__SECRET
    - MYSQL_PASSWORD
 
