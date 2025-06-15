@@ -23,3 +23,10 @@ Setup to be super easy to deploy your own. I have this running on the cheapest H
 7) Run `kamal accessory boot all` to load db / redis onto instance
 8) Run `kamal deploy` to deploy the web app.
 9) Setup A record to point at your server for your domain. I use cloudflare, so leaving proxy: true, with your domain set from cloudflare lets you use their "Full" encryption mode.
+
+### Secrets
+- KAMAL_REGISTRY_PASSWORD - For example, a Personal access tokens (classic) for github registry.
+- MYSQL_ROOT_PASSWORD - Whatever you want
+- MYSQL_PASSWORD - Whatever you want
+- APP_APPLICATION__SECRET - Generate with `openssl rand -base64 64`
+- REPLICACHE_KEY= - Replicache is NOW FREE, but still needs a license key Instructions [here](https://doc.replicache.dev/concepts/licensing). Replicache is used to handle the local first sync.
