@@ -47,7 +47,7 @@ export default function Page() {
   );
 
   return (
-    <div className="h-full max-h-screen h-screen w-full mx-auto flex flex-col overflow-hidden">
+    <div className="relative h-dvh w-full mx-auto flex flex-col overflow-hidden">
       <SidebarTrigger
         variant="secondary"
         className={cn(
