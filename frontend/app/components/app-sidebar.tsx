@@ -89,7 +89,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           }
           break;
         }
-        case "k": {
+        case "r": {
           event.preventDefault();
           setCommandOpen((prev) => !prev);
           break;
