@@ -5,6 +5,8 @@ Prioritised features that I use and care about.
 - Multi provider
 - Concurrenct chats
 - Persistent streams
+- Hot bar
+- Keybinds (ctrl + number to jump to chat in hot bar, ctrl + h to pin chat to hotbar, ctrl + s to start new chat, ctrl + r to search for a chat)
 
 ## Todo:
 - Sharable Chats
