@@ -142,7 +142,7 @@ const MarkdownCodeRenderer = memo(
       />
     ) : (
       <code
-        className="custom-scrollbar break-words rounded-md bg-secondary px-1.5 py-0.5 font-mono text-sm font-semibold text-secondary-foreground"
+        className="custom-scrollbar break-words text-wrap rounded-md bg-secondary px-1.5 py-0.5 font-mono text-sm font-semibold text-secondary-foreground"
         {...props}
       >
         {children}
