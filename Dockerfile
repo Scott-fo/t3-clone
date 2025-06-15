@@ -39,8 +39,7 @@ RUN bun install --frozen-lockfile
 COPY frontend ./
 
 RUN --mount=type=secret,id=REPLICACHE_KEY \
-    echo "VITE_REPLICACHE_KEY=$(cat /run/secrets/replicache_license_key)" > .env && \
-    bun run build
+    echo "VITE_REPLICACHE_KEY=$(cat /run/secrets/REPLICACHE_KEY)" > .env
 
 RUN bun run build
 
