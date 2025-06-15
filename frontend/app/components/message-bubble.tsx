@@ -316,7 +316,7 @@ export const MessageBubble = memo(
     ({ id, chat_id, role, msg, reasoning }, ref) => {
       const isUser = role === "user";
 
-      const bubbleContainerClasses = `flex flex-col max-w-3xl min-h-20 my-10 mx-auto ${
+      const bubbleContainerClasses = `flex flex-col overflow-x-hidden max-w-screen sm:max-w-3xl min-h-20 my-10 mx-auto ${
         isUser ? "items-end" : "items-start"
       }`;
 
