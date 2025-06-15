@@ -24,6 +24,15 @@ import { useReplicache } from "~/contexts/ReplicacheContext";
 import { toast } from "sonner";
 import { CommandMenu } from "./chat-menu";
 import { Input } from "./ui/input";
+import { useApiKeys } from "~/hooks/use-api-keys";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 
 export const MAX_PINNED_CHATS = 9;
 
@@ -31,6 +40,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate();
   const rep = useReplicache();
   const activeId = useParams()?.thread_id ?? "";
+  const { data: apiKeys, isLoading: areApiKeysLoading } = useApiKeys();
 
   const allChats = useChatStore((state) => state.data);
   const user = useUserStore((state) => state.data);
@@ -39,6 +49,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [commandOpen, setCommandOpen] = useState(false);
+  const [isApiKeysDialogOpen, setIsApiKeysDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!areApiKeysLoading && (!apiKeys || apiKeys.length === 0)) {
+      setIsApiKeysDialogOpen(true);
+    } else {
+      setIsApiKeysDialogOpen(false);
+    }
+  }, [apiKeys, areApiKeysLoading]);
 
   const visibleChats = useMemo(
     () => allChats.filter((chat) => !chat.archived),
@@ -188,6 +207,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         setOpen={setCommandOpen}
         chats={visibleChats}
       />
+      <Dialog open={isApiKeysDialogOpen} onOpenChange={setIsApiKeysDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>API Key Required</DialogTitle>
+            <DialogDescription>
+              An API key is required to use Open Chat. Please add your API key
+              in the settings.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setIsApiKeysDialogOpen(false);
+                navigate(href("/settings"));
+              }}
+            >
+              Go to Settings
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sidebar>
   );
 }
