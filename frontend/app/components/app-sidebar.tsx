@@ -34,7 +34,7 @@ import {
 } from "~/components/ui/dialog";
 import { useConnectedProviderStore } from "~/stores/connected-provider";
 
-export const MAX_PINNED_CHATS = 9;
+export const MAX_PINNED_CHATS = 5;
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate();
