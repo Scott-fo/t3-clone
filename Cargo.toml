@@ -45,3 +45,4 @@ hkdf = "0.12.4"
 sha2 = "0.10.9"
 thiserror = "2.0.12"
 strum = { version = "0.27.1", features = ["derive"] }
+diesel_migrations = { version = "2.2.0", features = ["mysql"] }

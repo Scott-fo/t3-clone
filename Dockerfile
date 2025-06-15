@@ -22,8 +22,6 @@ WORKDIR /app
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 
-RUN cargo install diesel_cli --no-default-features --features "mysql"
-
 # Copy the application source and build it.
 COPY . .
 RUN cargo build --release --bin ${BIN_NAME}
@@ -49,6 +47,7 @@ WORKDIR /app
 
 COPY --from=rust-builder /app/target/release/web ./bin/web
 COPY --from=frontend-builder /frontend/build/client ./frontend/build/client
+COPY settings /app/settings
 
 EXPOSE 80
 USER nonroot:nonroot
