@@ -131,14 +131,15 @@ export default function Page({ params }: Route.ComponentProps) {
   return (
     <div className="relative h-full max-h-screen h-screen w-full mx-auto flex flex-col overflow-hidden">
       <SidebarTrigger
+        variant="default"
         className={cn(
           `z-50 absolute opacity-100 top-3 left-3 transition-opacity duration-200`,
-          sidebar.open && "opacity-0"
+          sidebar.open && !sidebar.isMobile && "opacity-0"
         )}
       />
       <div
         ref={containerRef}
-        className="flex-1 overflow-y-auto overflow-x-none px-4 py-4 space-y-10 custom-scrollbar"
+        className="z-10 flex-1 overflow-y-auto overflow-x-none px-4 py-4 space-y-10 custom-scrollbar"
       >
         {showMessages && <MessageList messages={messages} />}
         {showMessages && isPending && (
