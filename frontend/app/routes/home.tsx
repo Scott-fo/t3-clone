@@ -49,7 +49,7 @@ export default function Page() {
   return (
     <div className="h-full max-h-screen h-screen w-full mx-auto flex flex-col overflow-hidden">
       <SidebarTrigger
-        variant="default"
+        variant="secondary"
         className={cn(
           `z-50 absolute opacity-100 top-3 left-3 transition-opacity duration-200`,
           sidebar.open && sidebar.isMobile && "opacity-0"
