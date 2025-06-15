@@ -170,7 +170,7 @@ fn build_turns(history: &[Message]) -> Vec<Turn> {
                 _ => "user",
             }
             .into(),
-            content: m.body.clone(),
+            content: &m.body,
         })
         .collect()
 }
@@ -180,8 +180,8 @@ pub async fn generate_title(
     first_message: &str,
     model: OpenAiModel,
 ) -> Result<String> {
-    let request_body =
-        OpenAiRequest::prompt(model, create_title_prompt(first_message), false, None, None)?;
+    let title_prompt = create_title_prompt(first_message);
+    let request_body = OpenAiRequest::prompt(model, &title_prompt, false, None, None)?;
 
     let client = Client::new();
 
