@@ -1,47 +1,42 @@
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
-pub struct GeminiRequest {
-    pub contents: Vec<GeminiMessage>,
+pub struct GeminiRequest<'a> {
+    pub contents: Vec<GeminiMessage<'a>>,
 }
 
 #[derive(Debug, Serialize)]
-pub struct GeminiMessage {
+pub struct GeminiMessage<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub role: Option<String>,
-    pub parts: Vec<GeminiPart>,
+    pub role: Option<&'a str>,
+    pub parts: Vec<GeminiPart<'a>>,
 }
 
 #[derive(Debug, Serialize)]
-pub struct GeminiPart {
-    pub text: String,
+pub struct GeminiPart<'a> {
+    pub text: &'a str,
 }
 
-impl GeminiRequest {
-    pub fn chat(history: &[crate::models::message::Message]) -> Self {
+impl<'a> GeminiRequest<'a> {
+    pub fn chat(history: &'a [crate::models::message::Message]) -> Self {
         let contents = history
             .iter()
             .map(|m| GeminiMessage {
-                role: Some(
-                    match m.role.as_str() {
-                        "assistant" => "model",
-                        _ => "user",
-                    }
-                    .into(),
-                ),
-                parts: vec![GeminiPart {
-                    text: m.body.clone(),
-                }],
+                role: Some(match m.role.as_str() {
+                    "assistant" => "model",
+                    _ => "user",
+                }),
+                parts: vec![GeminiPart { text: &m.body }],
             })
             .collect();
 
         Self { contents }
     }
 
-    pub fn prompt(text: String) -> Self {
+    pub fn prompt(text: &'a str) -> Self {
         Self {
             contents: vec![GeminiMessage {
-                role: Some("user".into()),
+                role: Some("user"),
                 parts: vec![GeminiPart { text }],
             }],
         }

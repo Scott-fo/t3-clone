@@ -108,7 +108,8 @@ pub async fn generate_title(
     first_user_message: &str,
     model: GeminiModel,
 ) -> Result<String> {
-    let req_body = GeminiRequest::prompt(create_title_prompt(first_user_message));
+    let title_prompt = create_title_prompt(first_user_message);
+    let req_body = GeminiRequest::prompt(&title_prompt);
 
     let url = format!(
         "{}/{model}:generateContent?key={}",
