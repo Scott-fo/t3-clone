@@ -21,7 +21,7 @@ export const useConnectedProviderStore = create<State>()(
       setLoading: (loading) => set({ loading }),
       setData: (data) => set({ data, loading: false }),
 
-      clear: () => set({ data: null, loading: false }),
+      clear: () => set({ data: null, loading: true }),
     }),
     {
       name: "connected-provider-storage",
