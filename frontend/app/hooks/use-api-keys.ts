@@ -44,7 +44,6 @@ export function useConnectedProviders() {
 
       return res;
     },
-    staleTime: Infinity,
   });
 }
 
