@@ -6,4 +6,6 @@ pub mod replicache;
 pub mod replicache_client;
 pub mod replicache_client_group;
 pub mod session;
+pub mod shared_chat;
+pub mod shared_message;
 pub mod user;

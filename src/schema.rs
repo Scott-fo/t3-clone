@@ -106,6 +106,34 @@ diesel::table! {
 }
 
 diesel::table! {
+    shared_chats (id) {
+        #[max_length = 255]
+        id -> Varchar,
+        #[max_length = 255]
+        original_chat_id -> Varchar,
+        #[max_length = 255]
+        owner_user_id -> Varchar,
+        #[max_length = 255]
+        title -> Nullable<Varchar>,
+        created_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    shared_messages (id) {
+        #[max_length = 255]
+        id -> Varchar,
+        #[max_length = 255]
+        shared_chat_id -> Varchar,
+        #[max_length = 255]
+        role -> Varchar,
+        body -> Text,
+        reasoning -> Nullable<Text>,
+        created_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     users (id) {
         #[max_length = 255]
         id -> Varchar,
@@ -127,5 +155,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     replicache_client_groups,
     replicache_clients,
     sessions,
+    shared_chats,
+    shared_messages,
     users,
 );

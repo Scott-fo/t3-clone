@@ -17,5 +17,6 @@ export default [
   layout("layouts/public.tsx", [
     route("login", "routes/login.tsx"),
     route("register", "routes/register.tsx"),
+    route("shared/:id", "routes/shared.tsx"),
   ]),
 ] satisfies RouteConfig;

@@ -5,6 +5,8 @@ pub mod message;
 pub mod replicache_client;
 pub mod replicache_client_group;
 pub mod session;
+pub mod shared_chat;
+pub mod shared_message;
 
 use anyhow::Result;
 use diesel::prelude::*;

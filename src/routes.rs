@@ -17,6 +17,7 @@ use tower_sessions_redis_store::RedisStore;
 use crate::handlers::api_key::{create_api_key, delete_api_key, list_api_keys};
 use crate::handlers::auth::get_current_user;
 use crate::handlers::replicache::{replicache_pull, replicache_push};
+use crate::handlers::shared_chat::{create_shared_chat, delete_shared_chat, get_shared_chat};
 use crate::handlers::sse::sse_handler;
 use crate::{
     app::AppState,
@@ -44,6 +45,7 @@ pub fn app_routes(app_state: AppState) -> Router {
 
     Router::new()
         .route("/up", get(health))
+        .route("/api/shared/{id}", get(get_shared_chat))
         .nest("/api", protected_routes(app_state.clone()))
         .nest("/api/auth", auth_routes())
         .fallback_service(
@@ -91,6 +93,8 @@ pub fn protected_routes(state: AppState) -> Router<AppState> {
                 .route("/", post(create_api_key).get(list_api_keys))
                 .route("/{id}", delete(delete_api_key)),
         )
+        .route("/chats/{chat_id}/share", post(create_shared_chat))
+        .route("/shared/{id}", delete(delete_shared_chat))
         .route("/sse", get(sse_handler))
         .route_layer(middleware::from_fn_with_state(
             state,

@@ -81,7 +81,7 @@ pub async fn generate_title(
             openrouter::handler::generate_title(
                 &api_key,
                 &first_body,
-                OpenRouterModel::GeminiFlash20Free,
+                OpenRouterModel::GeminiFlash25,
             )
             .await?
         }
@@ -132,6 +132,14 @@ pub async fn generate_response(
             Err(e) => return Err(e.into()),
         }
     };
+
+    let provider_string = setup.provider.to_string();
+
+    tracing::info!(
+        model = setup.model,
+        provider = provider_string,
+        "Starting stream"
+    );
 
     // If there is an error here, we should handle it rather than relying on the stream to save the
     // errors

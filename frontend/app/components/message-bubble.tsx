@@ -16,16 +16,6 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
-import { useChatStore } from "~/stores/chat";
-import { useMessageStore } from "~/stores/message";
-import type { Chat } from "~/domain/chat";
-import type { Message } from "~/domain/message";
-import { nanoid } from "nanoid";
-import {
-  useReplicache,
-  type ReplicacheType,
-} from "~/contexts/ReplicacheContext";
-import type { Replicache } from "replicache";
 import { usePreferencesStore } from "~/stores/preferences";
 import { cn } from "~/lib/utils";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
@@ -35,7 +25,7 @@ interface Props {
   role: "user" | "assistant";
   msg: string;
   reasoning?: string | null;
-  chat_id: string;
+  forkChat?: (msg: string) => void;
 }
 
 interface ContentProps {
@@ -151,29 +141,6 @@ const MarkdownCodeRenderer = memo(
   }
 );
 
-const forkChat = (
-  rep: Replicache<ReplicacheType>,
-  break_id: string,
-  chat: Chat,
-  msgs: Message[]
-) => {
-  const new_id = nanoid();
-
-  const idx = msgs.findIndex((m) => m.id === break_id);
-  const new_msgs = msgs.slice(0, idx + 1).map((m) => ({
-    ...m,
-    id: nanoid(),
-    chat_id: new_id,
-  }));
-
-  rep.mutate.forkChat({
-    new_id,
-    title: chat.title ?? "Forked chat",
-    time: new Date().toISOString(),
-    msgs: new_msgs,
-  });
-};
-
 const ReasoningView = memo(
   ({ id, reasoning }: { id: string; reasoning: string }) => {
     const isPending = id === "pending";
@@ -218,21 +185,15 @@ const ReasoningView = memo(
 const AssistantMessageContent = memo(
   ({
     id,
-    chat_id,
     reasoning,
     msg,
+    forkChat,
   }: {
     id: string;
-    chat_id: string;
     msg: string;
     reasoning?: string | null;
+    forkChat?: (msgId: string) => void | null;
   }) => {
-    const chat = useChatStore((state) =>
-      state.data.find((c) => c.id === chat_id)
-    );
-    const msgs = useMessageStore((state) => state.data);
-    const rep = useReplicache();
-
     if (id === "pending" && msg === "" && !reasoning) {
       return (
         <p className="flex items-center">
@@ -289,19 +250,20 @@ const AssistantMessageContent = memo(
         {id !== "pending" && (
           <div className="pt-4 flex items-center gap-x-2 opacity-0 group-hover/message:opacity-100 transition-opacity duration-200">
             <TooltipProvider delayDuration={300}>
-              <TooltipPrimitive.Root>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    onClick={() => forkChat(rep, id, chat as Chat, msgs)}
-                    disabled={!chat}
-                  >
-                    <SplitIcon />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Fork chat</TooltipContent>
-              </TooltipPrimitive.Root>
+              {forkChat && (
+                <TooltipPrimitive.Root>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      onClick={() => forkChat(id)}
+                    >
+                      <SplitIcon />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Fork chat</TooltipContent>
+                </TooltipPrimitive.Root>
+              )}
               <CopyButton textToCopy={msg} />
             </TooltipProvider>
           </div>
@@ -313,7 +275,7 @@ const AssistantMessageContent = memo(
 
 export const MessageBubble = memo(
   forwardRef<HTMLDivElement, Props>(
-    ({ id, chat_id, role, msg, reasoning }, ref) => {
+    ({ id, role, msg, reasoning, forkChat }, ref) => {
       const isUser = role === "user";
 
       const bubbleContainerClasses = `flex flex-col overflow-x-hidden max-w-screen sm:max-w-3xl min-h-10 mx-auto ${
@@ -336,7 +298,7 @@ export const MessageBubble = memo(
                 {reasoning && <ReasoningView id={id} reasoning={reasoning} />}
                 <AssistantMessageContent
                   id={id}
-                  chat_id={chat_id}
+                  forkChat={forkChat}
                   msg={msg}
                   reasoning={reasoning}
                 />

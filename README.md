@@ -1,16 +1,25 @@
 # Simple clone of T3 Chat.
-Prioritised features that I use and care about.
+Aimed to stay true to the same mission statement of focusing on excellent performance. 
+Chats, messages, and active model are all handled local first.
+Prioritised features that I use and care about:
 
 - Local first
-- Multi provider
-- Concurrenct chats
+- Multi provider (OpenAI, Gemini, Anthropic, OpenRouter)
+- Code formatting (optional wrap, easy copy)
+- Keybinds (ctrl + number to jump to chat in hot bar, ctrl + h to pin chat to hotbar, ctrl + s to start new chat, ctrl + r to search for a chat)
+- Concurrent chats
 - Persistent streams
+- Fork chats
 - Hot bar
 - Keybinds (ctrl + number to jump to chat in hot bar, ctrl + h to pin chat to hotbar, ctrl + s to start new chat, ctrl + r to search for a chat)
+- Basic chat sharing
 
 ## Todo:
-- Sharable Chats
+- Cancel message
+- Add more than base share to chats (add to account etc)
 - More control via settings page
+- Extend reasoning support (only shown for indicated openai models for now)
+- Restyle model selection & expand open router model list.
 - Attachments
 - Image gen
 
@@ -32,4 +41,4 @@ Setup to be super easy to deploy your own. I have this running on the cheapest H
 - MYSQL_ROOT_PASSWORD - Whatever you want
 - MYSQL_PASSWORD - Whatever you want
 - APP_APPLICATION__SECRET - Generate with `openssl rand -base64 64`
-- REPLICACHE_KEY= - Replicache is NOW FREE, but still needs a license key Instructions [here](https://doc.replicache.dev/concepts/licensing). Replicache is used to handle the local first sync.
+- REPLICACHE_KEY= - Replicache is NOW FREE, but still needs a license key. Instructions [here](https://doc.replicache.dev/concepts/licensing). Replicache is used to handle the local first sync.

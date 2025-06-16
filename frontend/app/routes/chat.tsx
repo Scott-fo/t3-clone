@@ -18,6 +18,7 @@ import type { Message } from "~/domain/message";
 import { useUserStore } from "~/stores/user";
 import { SidebarTrigger, useSidebar } from "~/components/ui/sidebar";
 import { cn } from "~/lib/utils";
+import { useChatStore } from "~/stores/chat";
 
 export default function Page({ params }: Route.ComponentProps) {
   const rep = useReplicache();
@@ -26,6 +27,9 @@ export default function Page({ params }: Route.ComponentProps) {
 
   const user = useUserStore((state) => state.data);
   const messages = useMessageStore((state) => state.data);
+  const chat = useChatStore((state) =>
+    state.data.find((c) => c.id === params.thread_id)
+  );
 
   const [showMessages, setShowMessages] = useState(false);
 
@@ -128,6 +132,29 @@ export default function Page({ params }: Route.ComponentProps) {
     [messages.length, params.thread_id, rep, user?.id]
   );
 
+  const forkChat = useCallback(
+    (break_id: string) => {
+      if (!chat) return;
+
+      const new_id = nanoid();
+
+      const idx = messages.findIndex((m) => m.id === break_id);
+      const new_msgs = messages.slice(0, idx + 1).map((m) => ({
+        ...m,
+        id: nanoid(),
+        chat_id: new_id,
+      }));
+
+      rep.mutate.forkChat({
+        new_id,
+        title: chat.title ?? "Forked chat",
+        time: new Date().toISOString(),
+        msgs: new_msgs,
+      });
+    },
+    [chat, messages, rep]
+  );
+
   return (
     <div className="relative h-dvh w-full mx-auto flex flex-col overflow-hidden">
       <SidebarTrigger
@@ -141,10 +168,11 @@ export default function Page({ params }: Route.ComponentProps) {
         ref={containerRef}
         className="z-10 flex-1 overflow-y-auto overflow-x-none px-4 py-4 space-y-2 mt-2 custom-scrollbar"
       >
-        {showMessages && <MessageList messages={messages} />}
+        {showMessages && (
+          <MessageList forkChat={forkChat} messages={messages} />
+        )}
         {showMessages && isPending && (
           <MessageBubble
-            chat_id={params.thread_id}
             ref={pendingRef}
             key="pending"
             id="pending"
@@ -181,15 +209,23 @@ export default function Page({ params }: Route.ComponentProps) {
   );
 }
 
-const MessageList = memo(({ messages }: { messages: Message[] }) => {
-  return messages.map((msg) => (
-    <MessageBubble
-      key={msg.id}
-      id={msg.id}
-      chat_id={msg.chat_id}
-      role={msg.role}
-      msg={msg.body}
-      reasoning={msg.reasoning}
-    />
-  ));
-});
+const MessageList = memo(
+  ({
+    messages,
+    forkChat,
+  }: {
+    messages: Message[];
+    forkChat: (msgId: string) => void;
+  }) => {
+    return messages.map((msg) => (
+      <MessageBubble
+        forkChat={forkChat}
+        key={msg.id}
+        id={msg.id}
+        role={msg.role}
+        msg={msg.body}
+        reasoning={msg.reasoning}
+      />
+    ));
+  }
+);

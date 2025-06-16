@@ -102,13 +102,18 @@ export const supportedModels: SupportedModels[] = [
     logo: OpenRouter,
     models: [
       {
-        model: "deepseek/deepseek-r1-0528-qwen3-8b:free",
-        display: "DeepSeek R1 8b (OpenRouter)",
+        model: "google/gemini-2.5-flash-preview-05-20",
+        display: "Gemini 2.5 Flash (OpenRouter)",
         reasoning: false,
       },
       {
-        model: "google/gemini-2.0-flash-exp:free",
-        display: "Gemini 2.0 Flash (OpenRouter)",
+        model: "google/gemini-2.5-pro-preview",
+        display: "Gemini 2.5 Pro (OpenRouter)",
+        reasoning: false,
+      },
+      {
+        model: "openai/gpt-4.1",
+        display: "GPT 4.1 (OpenRouter)",
         reasoning: false,
       },
     ],

@@ -4,4 +4,5 @@ pub mod chat;
 pub mod container;
 pub mod message;
 pub mod replicache;
+pub mod shared_chat;
 pub mod sse_manager;

@@ -25,6 +25,7 @@ import { useActiveModelStore } from "~/stores/active-model";
 import { useReplicache } from "~/contexts/ReplicacheContext";
 import { nanoid } from "nanoid";
 import { supportedModels, type Reasoning } from "~/domain/ai";
+import { useSidebar } from "./ui/sidebar";
 
 interface Props {
   handleSubmit: (text: string) => Promise<void>;
@@ -40,6 +41,7 @@ const reasoningLevelIcon = {
 const ChatInput = forwardRef<HTMLTextAreaElement, Props>(
   ({ disabled, handleSubmit }, ref) => {
     const rep = useReplicache();
+    const { isMobile } = useSidebar();
     const activeModel = useActiveModelStore((state) => state.data);
 
     const [messageValue, setMessageValue] = useState("");
@@ -82,7 +84,7 @@ const ChatInput = forwardRef<HTMLTextAreaElement, Props>(
               value={messageValue}
               onChange={(e) => setMessageValue(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
+                if (e.key === "Enter" && !e.shiftKey && !isMobile) {
                   e.preventDefault();
                   submitMessage();
                 }

@@ -17,13 +17,20 @@ const PublicLayout = () => {
     );
   }
 
-  if (user) {
+  if (
+    user &&
+    (location.pathname === "/login" || location.pathname === "/register")
+  ) {
     return <Navigate to="/" replace />;
   }
 
-  const allowedPaths = ["/login", "/register"];
+  const allowedPaths = ["/login", "/register", "/shared"];
 
-  if (!allowedPaths.includes(location.pathname)) {
+  const isPathAllowed = allowedPaths.some((path) =>
+    location.pathname.startsWith(path)
+  );
+
+  if (!isPathAllowed) {
     return <Navigate to="/login" replace />;
   }
 
