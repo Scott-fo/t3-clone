@@ -41,3 +41,9 @@ Setup to be super easy to deploy your own. I have this running on the cheapest H
 - MYSQL_PASSWORD - Whatever you want
 - APP_APPLICATION__SECRET - Generate with `openssl rand -base64 64`
 - REPLICACHE_KEY= - Replicache is NOW FREE, but still needs a license key. Instructions [here](https://doc.replicache.dev/concepts/licensing). Replicache is used to handle the local first sync.
+
+## Running Locally
+There is a local.yaml config already setup. You just need to get a replicache key and add it to the frontend/.env as `VITE_REPLICACHE_KEY`.
+- Load DB / redis using `docker compose up -d`
+- Run backend by running `cargo run` from root dir.
+- Run frontend by running `bun dev` from the ./frontend dir.
