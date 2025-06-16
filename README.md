@@ -1,4 +1,4 @@
-# Simple clone of T3 Chat.
+# Clone of [t3.chat](https://t3.chat) for cloneathon
 Aimed to stay true to the same mission statement of focusing on excellent performance. 
 Chats, messages, and active model are all handled local first.
 Prioritised features that I use and care about:
