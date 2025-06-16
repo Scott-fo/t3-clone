@@ -11,7 +11,6 @@ Prioritised features that I use and care about:
 - Persistent streams
 - Fork chats
 - Hot bar
-- Keybinds (ctrl + number to jump to chat in hot bar, ctrl + h to pin chat to hotbar, ctrl + s to start new chat, ctrl + r to search for a chat)
 - Basic chat sharing
 
 ## Todo:
