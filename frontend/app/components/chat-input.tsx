@@ -84,7 +84,12 @@ const ChatInput = forwardRef<HTMLTextAreaElement, Props>(
               value={messageValue}
               onChange={(e) => setMessageValue(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey && !isMobile) {
+                if (
+                  e.key === "Enter" &&
+                  !e.shiftKey &&
+                  !isMobile &&
+                  !disabled
+                ) {
                   e.preventDefault();
                   submitMessage();
                 }
