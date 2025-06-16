@@ -77,68 +77,75 @@ export const ChatStreamProvider: React.FC<Props> = ({ children }) => {
       });
     };
 
-    const handleStreamDone = (r: Response) => {
+    const handleStreamDone = async (r: Response) => {
       const { chat_id: chatId, msg_id } = r.data;
 
-      const id = msg_id ? msg_id : nanoid();
+      const id = msg_id ?? nanoid();
       const now = new Date().toISOString();
 
-      setPendingResponses((prevStreams) => {
-        const streamToFinalize = prevStreams[chatId];
+      let finalMsg: Message | undefined;
+
+      setPendingResponses((prev) => {
+        const streamToFinalize = prev[chatId];
 
         if (streamToFinalize && user) {
-          const final_msg = {
+          finalMsg = {
             id,
             chat_id: chatId,
-            user_id: user?.id,
             role: "assistant",
             body: streamToFinalize.content,
             reasoning: streamToFinalize.reasoning,
             created_at: now,
             updated_at: now,
-            version: 1,
-          } as Message;
+          };
 
-          useMessageStore.getState().appendMessage(final_msg);
-
-          rep.mutate.createMessage(final_msg);
-          rep.mutate.updateChat({
-            id: chatId,
-            updated_at: now,
-          });
+          useMessageStore.getState().appendMessage(finalMsg);
         }
 
-        const { [chatId]: _, ...rest } = prevStreams;
+        const { [chatId]: _removed, ...rest } = prev;
         return rest;
       });
+
+      if (finalMsg) {
+        await rep.mutate.createMessage(finalMsg);
+        await rep.mutate.updateChat({ id: chatId, updated_at: now });
+      }
     };
 
-    const handleStreamError = (r: Response) => {
+    const handleStreamError = async (r: Response) => {
       const { chat_id: chatId, error } = r.data;
 
-      console.error("GOT STREAM ERROR", r.data);
+      console.error("GOT STREAM ERROR:", r.data);
+
       const id = nanoid();
       const now = new Date().toISOString();
 
-      setPendingResponses((prevStreams) => {
-        const streamWithError = prevStreams[chatId];
+      let errorMsg: Message | undefined;
+
+      setPendingResponses((prev) => {
+        const streamWithError = prev[chatId];
 
         if (streamWithError && user) {
-          const errorMessage = `Error: ${error}`;
-
-          rep.mutate.createMessage({
+          errorMsg = {
             id,
             chat_id: chatId,
             role: "assistant",
-            body: errorMessage,
+            body: `Error: ${error}`,
             created_at: now,
             updated_at: now,
-          });
+          };
+
+          useMessageStore.getState().appendMessage(errorMsg);
         }
 
-        const { [chatId]: _, ...rest } = prevStreams;
+        const { [chatId]: _removed, ...rest } = prev;
         return rest;
       });
+
+      if (errorMsg) {
+        await rep.mutate.createMessage(errorMsg);
+        await rep.mutate.updateChat({ id: chatId, updated_at: now });
+      }
     };
 
     const handleStreamExit = (r: Response) => {
