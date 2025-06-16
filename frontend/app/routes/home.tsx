@@ -1,12 +1,22 @@
 import ChatInput from "~/components/chat-input";
 import { useReplicache } from "~/contexts/ReplicacheContext";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { nanoid } from "nanoid";
 import { useUserStore } from "~/stores/user";
 import { useChatStream } from "~/contexts/ChatStreamContext";
 import { href, useNavigate } from "react-router";
 import { SidebarTrigger, useSidebar } from "~/components/ui/sidebar";
 import { cn } from "~/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import { Button } from "~/components/ui/button";
+import { useConnectedProviders } from "~/hooks/use-api-keys";
 
 export default function Page() {
   const rep = useReplicache();
@@ -14,6 +24,21 @@ export default function Page() {
   const { startStream } = useChatStream();
   const navigate = useNavigate();
   const sidebar = useSidebar();
+
+  const [isApiKeysDialogOpen, setIsApiKeysDialogOpen] = useState(false);
+  const { data: connectedProviders, isLoading: areConnectedProvidersLoading } =
+    useConnectedProviders();
+
+  useEffect(() => {
+    if (
+      !areConnectedProvidersLoading &&
+      (!connectedProviders || connectedProviders.length === 0)
+    ) {
+      setIsApiKeysDialogOpen(true);
+    } else {
+      setIsApiKeysDialogOpen(false);
+    }
+  }, [connectedProviders, areConnectedProvidersLoading]);
 
   const onSendMessage = useCallback(
     async (msg: string) => {
@@ -74,6 +99,27 @@ export default function Page() {
           </div>
         </div>
       </div>
+      <Dialog open={isApiKeysDialogOpen} onOpenChange={setIsApiKeysDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>API Key Required</DialogTitle>
+            <DialogDescription>
+              An API key is required to use Open Chat. Please add your API key
+              in the settings.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setIsApiKeysDialogOpen(false);
+                navigate(href("/settings"));
+              }}
+            >
+              Go to Settings
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

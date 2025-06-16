@@ -21,7 +21,6 @@ import {
 } from "~/components/ui/sidebar";
 import { useReplicache } from "~/contexts/ReplicacheContext";
 import { api } from "~/lib/api";
-import { useConnectedProviderStore } from "~/stores/connected-provider";
 import { useUserStore } from "~/stores/user";
 
 export function NavUser({
@@ -37,9 +36,6 @@ export function NavUser({
   const navigate = useNavigate();
 
   const clearUser = useUserStore((state) => state.clear);
-  const clearConnectedProviders = useConnectedProviderStore(
-    (state) => state.clear
-  );
 
   const logoutMutation = useMutation({
     mutationFn: () => api.post("/api/logout"),
@@ -48,7 +44,6 @@ export function NavUser({
       rep.close();
       dropAllDatabases();
       clearUser();
-      clearConnectedProviders();
       navigate("/login", { replace: true });
     },
   });

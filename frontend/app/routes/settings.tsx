@@ -1,11 +1,11 @@
 import ProviderCard from "~/components/provider-card";
 import { SidebarTrigger, useSidebar } from "~/components/ui/sidebar";
+import { useConnectedProviders } from "~/hooks/use-api-keys";
 import { cn } from "~/lib/utils";
-import { useConnectedProviderStore } from "~/stores/connected-provider";
 
 export default function Page() {
   const sidebar = useSidebar();
-  const connectedProviders = useConnectedProviderStore((state) => state.data);
+  const { data: connectedProviders } = useConnectedProviders();
 
   const openaiKey = connectedProviders?.find((k) => k.provider === "openai");
   const googleKey = connectedProviders?.find((k) => k.provider === "google");
