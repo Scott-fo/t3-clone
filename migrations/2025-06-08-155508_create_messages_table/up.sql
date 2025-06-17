@@ -6,8 +6,8 @@ CREATE TABLE messages (
   body                TEXT         NOT NULL,
   reasoning           TEXT         NULL,
   version             INT          NOT NULL DEFAULT 1,
-  created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_at          TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at          TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   INDEX idx_msgs_chat      (chat_id)
 );
 

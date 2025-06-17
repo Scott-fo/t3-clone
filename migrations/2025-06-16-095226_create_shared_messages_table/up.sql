@@ -4,7 +4,7 @@ CREATE TABLE shared_messages (
   role             VARCHAR(255) NOT NULL DEFAULT 'user',
   body             TEXT         NOT NULL,
   reasoning        TEXT         NULL,
-  created_at       TIMESTAMP    NOT NULL,
+  created_at       TIMESTAMP(3)    NOT NULL,
   
   INDEX idx_shared_msgs_chat (shared_chat_id)
 );

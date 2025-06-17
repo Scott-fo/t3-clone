@@ -1,5 +1,5 @@
 use anyhow::{Context, Result, bail};
-use chrono::{Duration, Utc};
+use chrono::Utc;
 use diesel::prelude::*;
 
 use crate::{
@@ -137,10 +137,7 @@ impl MessageService {
         reply: StreamResult,
         user_id: &str,
     ) -> Result<Message> {
-        // Not aesthetic, but a work around for super fast local responses from gemini / nano
-        // models
         let now = Utc::now();
-        let safe_created = now + Duration::seconds(1);
 
         let args = CreateArgs {
             id: reply.msg_id,
@@ -148,8 +145,8 @@ impl MessageService {
             role: "assistant".to_owned(),
             body: reply.content,
             reasoning: reply.reasoning,
-            created_at: safe_created,
-            updated_at: safe_created,
+            created_at: now,
+            updated_at: now,
         };
 
         self.create(conn, args, user_id)
@@ -162,10 +159,7 @@ impl MessageService {
         provider: AiProvider,
         user_id: &str,
     ) -> Result<Message> {
-        // Not aesthetic, but a work around for super fast local responses from gemini / nano
-        // models
         let now = Utc::now();
-        let safe_created = now + Duration::seconds(1);
 
         let args = CreateArgs {
             id: uuid::Uuid::new_v4().to_string(),
@@ -173,8 +167,8 @@ impl MessageService {
             role: "assistant".into(),
             body: format!("Error: Missing API key for {}", provider),
             reasoning: None,
-            created_at: safe_created,
-            updated_at: safe_created,
+            created_at: now,
+            updated_at: now,
         };
 
         self.create(conn, args, user_id)
