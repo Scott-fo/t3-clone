@@ -60,12 +60,12 @@ export const supportedModels: SupportedModels[] = [
     logo: Gemini,
     models: [
       {
-        model: "gemini-2.5-pro-preview-06-05",
+        model: "gemini-2.5-pro",
         display: "Gemini 2.5 Pro",
         reasoning: false,
       },
       {
-        model: "gemini-2.5-flash-preview-05-20",
+        model: "gemini-2.5-flash",
         display: "Gemini 2.5 Flash",
         reasoning: false,
       },
@@ -107,13 +107,8 @@ export const supportedModels: SupportedModels[] = [
         reasoning: false,
       },
       {
-        model: "google/gemini-2.5-pro-preview",
-        display: "Gemini 2.5 Pro (OpenRouter)",
-        reasoning: false,
-      },
-      {
-        model: "openai/gpt-4.1",
-        display: "GPT 4.1 (OpenRouter)",
+        model: "x-ai/grok-4",
+        display: "Grok 4 (OpenRouter)",
         reasoning: false,
       },
     ],
