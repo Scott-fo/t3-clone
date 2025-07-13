@@ -86,6 +86,7 @@ const ChatInput = forwardRef<HTMLTextAreaElement, Props>(
               onKeyDown={(e) => {
                 if (
                   e.key === "Enter" &&
+                  e.ctrlKey &&
                   !e.shiftKey &&
                   !isMobile &&
                   !disabled
